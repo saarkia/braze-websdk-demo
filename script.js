@@ -217,6 +217,14 @@ function checkSDKLoaded() {
         debugLog('SDK-CHECK', '❌ Braze SDK not loaded from CDN', 'error');
         debugLog('SDK-CHECK', `All window properties: ${Object.keys(window).filter(k => k.toLowerCase().includes('braz') || k.toLowerCase().includes('appboy')).join(', ')}`, 'info');
         
+        // Check if it might be an ad blocker
+        debugLog('SDK-CHECK', '🛡️ TROUBLESHOOTING: SDK failed to load', 'warning');
+        debugLog('SDK-CHECK', '💡 Common cause: Ad blocker or privacy extension', 'warning');
+        debugLog('SDK-CHECK', '✅ Solution: Disable ad blocker for this site', 'warning');
+        debugLog('SDK-CHECK', '📋 Extensions that may block: uBlock Origin, AdBlock Plus, Privacy Badger, Ghostery', 'warning');
+        
+        logActivity('Warning', '⚠️ AD BLOCKER DETECTED: The Braze SDK may be blocked by your ad blocker. Please disable it for this site and refresh.', 'warning');
+        
         // Try to reload SDK after a delay
         setTimeout(retrySDKLoad, 2000);
     }
