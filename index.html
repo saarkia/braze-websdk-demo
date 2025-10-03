@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Braze WebSDK Demo</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-rocket"></i>
+                <h1>Braze WebSDK Demo</h1>
+            </div>
+            <button class="settings-toggle" id="settingsToggle">
+                <i class="fas fa-cog"></i>
+            </button>
+        </header>
+
+        <!-- Environment Selector -->
+        <div class="environment-selector">
+            <div class="env-selector-group">
+                <label for="environmentSelect">
+                    <i class="fas fa-server"></i>
+                    Environment
+                </label>
+                <select id="environmentSelect" onchange="loadEnvironment()">
+                    <option value="">-- Select Environment --</option>
+                </select>
+            </div>
+            <div class="env-buttons">
+                <button class="btn-env" onclick="saveEnvironment()">
+                    <i class="fas fa-save"></i>
+                    Save Current
+                </button>
+                <button class="btn-env" onclick="deleteEnvironment()">
+                    <i class="fas fa-trash"></i>
+                    Delete
+                </button>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar" id="statusBar">
+            <div class="status-item">
+                <span class="status-label">SDK Status:</span>
+                <span class="status-value" id="sdkStatus">Not Initialized</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">SDK Version:</span>
+                <span class="status-value" id="sdkVersion">Loading...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Push Status:</span>
+                <span class="status-value" id="pushStatus">Not Enabled</span>
+            </div>
+        </div>
+
+        <!-- Content Wrapper with Sidebar -->
+        <div class="content-wrapper">
+            <!-- Main Content -->
+            <main class="main-content">
+            <!-- SDK Configuration Card -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-key"></i>
+                    <h2>SDK Configuration</h2>
+                </div>
+                <div class="card-content">
+                    <div class="sdk-info">
+                        <p><strong>Current SDK URL:</strong> <span id="currentSdkUrl">braze-sdk.min.js (v5.4 - Hosted Locally)</span></p>
+                        <p><strong>Selected Endpoint:</strong> <span id="selectedEndpoint">https://sdk.iad-03.braze.com</span></p>
+                    </div>
+                    <div class="input-group">
+                        <label for="apiKey">API Key</label>
+                        <input type="password" id="apiKey" placeholder="Enter your Braze API Key">
+                        <button class="toggle-visibility" onclick="togglePasswordVisibility('apiKey')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="input-group">
+                        <label for="sdkEndpoint">SDK Endpoint</label>
+                        <select id="sdkEndpoint" onchange="updateSelectedEndpoint()">
+                            <option value="https://sdk.iad-01.braze.com">US-01 (iad-01)</option>
+                            <option value="https://sdk.iad-02.braze.com">US-02 (iad-02)</option>
+                            <option value="https://sdk.iad-03.braze.com" selected>US-03 (iad-03)</option>
+                            <option value="https://sdk.iad-04.braze.com">US-04 (iad-04)</option>
+                            <option value="https://sdk.iad-05.braze.com">US-05 (iad-05)</option>
+                            <option value="https://sdk.iad-06.braze.com">US-06 (iad-06)</option>
+                            <option value="https://sdk.iad-08.braze.com">US-08 (iad-08)</option>
+                            <option value="https://sdk.fra-02.braze.eu">EU-02 (fra-02)</option>
+                            <option value="https://sdk.syd-02.braze.com">AP-03 (syd-02)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="userId">User ID (Optional)</label>
+                        <input type="text" id="userId" placeholder="Enter User ID for identification">
+                    </div>
+                    <button class="btn-primary" id="initializeBtn">
+                        <i class="fas fa-play"></i>
+                        Initialize SDK
+                    </button>
+                </div>
+            </div>
+
+            <!-- User Data Logging Card -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-user-tag"></i>
+                    <h2>User Data Logging</h2>
+                </div>
+                <div class="card-content">
+                    <div class="tabs">
+                        <button class="tab-btn active" onclick="switchTab('attributes')">Custom Attributes</button>
+                        <button class="tab-btn" onclick="switchTab('events')">Custom Events</button>
+                        <button class="tab-btn" onclick="switchTab('session')">Session Management</button>
+                    </div>
+
+                    <!-- Custom Attributes Tab -->
+                    <div class="tab-content active" id="attributes-tab">
+                        <div class="input-group">
+                            <label for="attrKey">Attribute Key</label>
+                            <input type="text" id="attrKey" placeholder="e.g., favorite_color, subscription_tier">
+                        </div>
+                        <div class="input-group">
+                            <label for="attrValue">Attribute Value</label>
+                            <input type="text" id="attrValue" placeholder="e.g., blue, premium">
+                        </div>
+                        <div class="input-group">
+                            <label for="attrType">Value Type</label>
+                            <select id="attrType">
+                                <option value="string">String</option>
+                                <option value="number">Number</option>
+                                <option value="boolean">Boolean</option>
+                                <option value="date">Date</option>
+                            </select>
+                        </div>
+                        <button class="btn-secondary" onclick="logCustomAttribute()">
+                            <i class="fas fa-plus"></i>
+                            Log Custom Attribute
+                        </button>
+                    </div>
+
+                    <!-- Custom Events Tab -->
+                    <div class="tab-content" id="events-tab">
+                        <div class="input-group">
+                            <label for="eventName">Event Name</label>
+                            <input type="text" id="eventName" placeholder="e.g., product_viewed, button_clicked">
+                        </div>
+                        <div class="input-group">
+                            <label for="eventProperties">Event Properties (JSON)</label>
+                            <textarea id="eventProperties" placeholder='{"product_id": "123", "category": "electronics"}'></textarea>
+                        </div>
+                        <button class="btn-secondary" onclick="logCustomEvent()">
+                            <i class="fas fa-chart-line"></i>
+                            Log Custom Event
+                        </button>
+                    </div>
+
+                    <!-- Session Management Tab -->
+                    <div class="tab-content" id="session-tab">
+                        <div class="session-controls">
+                            <button class="btn-secondary" onclick="startSession()">
+                                <i class="fas fa-play-circle"></i>
+                                Start Session
+                            </button>
+                            <button class="btn-secondary" onclick="endSession()">
+                                <i class="fas fa-stop-circle"></i>
+                                End Session
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- In-App Messages Card -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-comment-dots"></i>
+                    <h2>In-App Messages</h2>
+                </div>
+                <div class="card-content">
+                    <p class="card-description">
+                        Trigger in-app messages configured in your Braze dashboard. Messages will appear based on your campaign settings.
+                    </p>
+                    <div class="button-group">
+                        <button class="btn-secondary" onclick="requestInAppMessages()">
+                            <i class="fas fa-sync"></i>
+                            Request Messages
+                        </button>
+                        <button class="btn-secondary" onclick="flushData()">
+                            <i class="fas fa-upload"></i>
+                            Flush Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Cards Card -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-inbox"></i>
+                    <h2>Content Cards</h2>
+                </div>
+                <div class="card-content">
+                    <p class="card-description">
+                        Display Content Cards configured in your Braze dashboard. Cards can be used for persistent, personalized content feeds.
+                    </p>
+                    <div class="button-group">
+                        <button class="btn-secondary" onclick="toggleContentCards()">
+                            <i class="fas fa-eye"></i>
+                            Toggle Feed
+                        </button>
+                        <button class="btn-secondary" onclick="showContentCards()">
+                            <i class="fas fa-folder-open"></i>
+                            Show Feed
+                        </button>
+                        <button class="btn-secondary" onclick="hideContentCards()">
+                            <i class="fas fa-folder"></i>
+                            Hide Feed
+                        </button>
+                        <button class="btn-secondary" onclick="refreshContentCards()">
+                            <i class="fas fa-sync"></i>
+                            Refresh Cards
+                        </button>
+                    </div>
+                    
+                    <!-- Content Cards Feed Container -->
+                    <div id="content-cards-container" class="content-cards-wrapper" style="display: none;">
+                        <div class="content-cards-header">
+                            <h3>Your Content Feed</h3>
+                            <button class="close-cards" onclick="hideContentCards()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div id="content-cards-feed"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Push Notifications Card -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-bell"></i>
+                    <h2>Push Notifications</h2>
+                </div>
+                <div class="card-content">
+                    <div class="push-status" id="pushStatusDetails">
+                        <p>Push notifications allow you to re-engage users even when they're not on your site.</p>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn-secondary" onclick="requestPushPermission()">
+                            <i class="fas fa-shield-alt"></i>
+                            Request Permission
+                        </button>
+                        <button class="btn-secondary" onclick="registerPush()">
+                            <i class="fas fa-user-plus"></i>
+                            Register for Push
+                        </button>
+                        <button class="btn-secondary" onclick="testPushNotification()">
+                            <i class="fas fa-paper-plane"></i>
+                            Test Notification
+                        </button>
+                    </div>
+                </div>
+            </div>
+            </main>
+
+            <!-- Right Sidebar with Tabs -->
+            <aside class="right-sidebar">
+                <div class="sidebar-tabs">
+                    <button class="sidebar-tab active" onclick="switchSidebarTab('activity')">
+                        <i class="fas fa-list"></i>
+                        Activity
+                    </button>
+                    <button class="sidebar-tab" onclick="switchSidebarTab('debug')">
+                        <i class="fas fa-terminal"></i>
+                        Debug
+                    </button>
+                </div>
+
+                <!-- Activity Log Tab -->
+                <div class="sidebar-tab-content active" id="activity-sidebar">
+                    <div class="sidebar-header">
+                        <h3>Activity Log</h3>
+                        <button class="clear-log" onclick="clearLog()">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="sidebar-content" id="logContent">
+                        <div class="log-entry info">
+                            <span class="timestamp">[Ready]</span>
+                            <span class="message">Braze WebSDK Demo initialized. Configure your API key to get started.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Debug Console Tab -->
+                <div class="sidebar-tab-content" id="debug-sidebar">
+                    <div class="sidebar-header">
+                        <h3>Debug Console</h3>
+                        <div class="debug-controls">
+                            <button class="debug-btn" onclick="toggleDebugExpand()">
+                                <i class="fas fa-expand" id="expandIcon"></i>
+                            </button>
+                            <button class="debug-btn" onclick="copyDebugLog()">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                            <button class="debug-btn" onclick="clearDebugConsole()">
+                                <i class="fas fa-eraser"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="sidebar-content" id="debugContent">
+                        <div class="debug-entry debug-info">
+                            <span class="debug-time">[00:00:00.000]</span>
+                            <span class="debug-type">[INIT]</span>
+                            <span class="debug-message">Debug console ready. Waiting for SDK operations...</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Settings Panel -->
+        <div class="settings-panel" id="settingsPanel">
+            <div class="settings-header">
+                <h3>Advanced SDK Settings</h3>
+                <button class="close-settings" onclick="toggleSettings()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="settings-content">
+                <div class="setting-item">
+                    <label for="enableLogging">
+                        <input type="checkbox" id="enableLogging" checked>
+                        Enable Logging
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <label for="sessionTimeout">Session Timeout (seconds)</label>
+                    <input type="number" id="sessionTimeout" value="30" min="1">
+                </div>
+                <div class="setting-item">
+                    <label for="triggerInterval">Minimum Trigger Interval (seconds)</label>
+                    <input type="number" id="triggerInterval" value="30" min="1">
+                </div>
+                <div class="setting-item">
+                    <label for="enableSdkAuth">
+                        <input type="checkbox" id="enableSdkAuth">
+                        Enable SDK Authentication
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <label for="allowUserSuppliedJavascript">
+                        <input type="checkbox" id="allowUserSuppliedJavascript">
+                        Allow User Supplied JavaScript
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <label for="disablePushTokenMaintenance">
+                        <input type="checkbox" id="disablePushTokenMaintenance">
+                        Disable Push Token Maintenance
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Initializing Braze SDK...</p>
+        </div>
+    </div>
+
+    <!-- Scripts - Load Braze SDK locally (bypasses ad blockers) -->
+    <script src="braze-sdk.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
