@@ -186,29 +186,9 @@ function clearAppState({ resetFields = true, suppressLog = false } = {}) {
     }
 }
 
-function getAppBasePath() {
-    try {
-        const { pathname } = window.location;
-        if (!pathname || pathname === '/') {
-            return '/';
-        }
-        if (pathname.endsWith('/')) {
-            return pathname;
-        }
-        const segments = pathname.split('/');
-        segments.pop();
-        const base = segments.join('/');
-        return base.endsWith('/') ? base : `${base}/`;
-    } catch (error) {
-        debugLog('SW', `Failed to determine application base path: ${error.message}`, 'warning');
-        return '/';
-    }
-}
-
 function getServiceWorkerLocation() {
     try {
-        const baseUrl = `${window.location.origin}${getAppBasePath()}`;
-        const swUrl = new URL('sw.js', baseUrl);
+        const swUrl = new URL('sw.js', window.location.href);
         return swUrl.pathname;
     } catch (error) {
         debugLog('SW', `Failed to resolve service worker location: ${error.message}`, 'warning');
@@ -217,9 +197,14 @@ function getServiceWorkerLocation() {
 }
 
 function getServiceWorkerScope() {
-    const location = getServiceWorkerLocation();
-    const scope = location.replace(/[^/]+$/, '');
-    return scope || '/';
+    try {
+        const swUrl = new URL(getServiceWorkerLocation(), window.location.origin);
+        const scopeUrl = new URL('./', swUrl);
+        return scopeUrl.pathname;
+    } catch (error) {
+        debugLog('SW', `Failed to resolve service worker scope: ${error.message}`, 'warning');
+        return '/';
+    }
 }
 
 // Debug Console Functions (define early so they're available immediately)
