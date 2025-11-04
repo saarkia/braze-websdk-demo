@@ -186,6 +186,42 @@ function clearAppState({ resetFields = true, suppressLog = false } = {}) {
     }
 }
 
+function getAppBasePath() {
+    try {
+        const { pathname } = window.location;
+        if (!pathname || pathname === '/') {
+            return '/';
+        }
+        if (pathname.endsWith('/')) {
+            return pathname;
+        }
+        const segments = pathname.split('/');
+        segments.pop();
+        const base = segments.join('/');
+        return base.endsWith('/') ? base : `${base}/`;
+    } catch (error) {
+        debugLog('SW', `Failed to determine application base path: ${error.message}`, 'warning');
+        return '/';
+    }
+}
+
+function getServiceWorkerLocation() {
+    try {
+        const baseUrl = `${window.location.origin}${getAppBasePath()}`;
+        const swUrl = new URL('sw.js', baseUrl);
+        return swUrl.pathname;
+    } catch (error) {
+        debugLog('SW', `Failed to resolve service worker location: ${error.message}`, 'warning');
+        return 'sw.js';
+    }
+}
+
+function getServiceWorkerScope() {
+    const location = getServiceWorkerLocation();
+    const scope = location.replace(/[^/]+$/, '');
+    return scope || '/';
+}
+
 // Debug Console Functions (define early so they're available immediately)
 function debugLog(type, message, level = 'info') {
     const debugContent = document.getElementById('debugContent');
@@ -319,7 +355,9 @@ function setupEventListeners() {
     
     // Check if service worker is supported for push notifications
     if ('serviceWorker' in navigator) {
-        registerServiceWorker();
+        registerServiceWorker().catch(() => {
+            // Error already logged in registerServiceWorker
+        });
     }
 
     setupStatePersistence();
@@ -543,6 +581,8 @@ async function initializeBrazeSDK() {
         const enableSdkAuth = document.getElementById('enableSdkAuth').checked;
         const allowUserSuppliedJavascript = document.getElementById('allowUserSuppliedJavascript').checked;
         const disablePushTokenMaintenance = document.getElementById('disablePushTokenMaintenance').checked;
+        const serviceWorkerLocation = getServiceWorkerLocation();
+        const serviceWorkerScope = getServiceWorkerScope();
         
         debugLog('INIT', '--- Advanced Settings ---', 'info');
         debugLog('INIT', `Enable Logging: ${enableLogging}`, 'info');
@@ -551,6 +591,7 @@ async function initializeBrazeSDK() {
         debugLog('INIT', `SDK Authentication: ${enableSdkAuth}`, 'info');
         debugLog('INIT', `User Supplied JS: ${allowUserSuppliedJavascript}`, 'info');
         debugLog('INIT', `Disable Push Maintenance: ${disablePushTokenMaintenance}`, 'info');
+        debugLog('INIT', `Service Worker path: ${serviceWorkerLocation} (scope: ${serviceWorkerScope})`, 'info');
         
         // Initialize Braze
         brazeInstance = window.braze;
@@ -564,7 +605,8 @@ async function initializeBrazeSDK() {
             allowUserSuppliedJavascript: allowUserSuppliedJavascript,
             disablePushTokenMaintenance: disablePushTokenMaintenance,
             automaticallyShowInAppMessages: true,
-            serviceWorkerLocation: '/sw.js',  // Tell Braze where our service worker is
+            serviceWorkerLocation: serviceWorkerLocation,
+            serviceWorkerScope: serviceWorkerScope,
             manageServiceWorkerExternally: false  // Let Braze manage the service worker
         };
         
@@ -900,10 +942,17 @@ function testPushNotification() {
 // Service Worker Registration
 async function registerServiceWorker() {
     try {
-        const registration = await navigator.serviceWorker.register('sw.js');
+        const serviceWorkerLocation = getServiceWorkerLocation();
+        const serviceWorkerScope = getServiceWorkerScope();
+        debugLog('SW', `Attempting Service Worker registration at ${serviceWorkerLocation} with scope ${serviceWorkerScope}`, 'info');
+        const registration = await navigator.serviceWorker.register(serviceWorkerLocation, { scope: serviceWorkerScope });
         logActivity('Info', 'Service Worker registered successfully.', 'info');
+        debugLog('SW', 'Service Worker registration succeeded.', 'success');
+        return registration;
     } catch (error) {
         logActivity('Warning', `Service Worker registration failed: ${error.message}`, 'warning');
+        debugLog('SW', `Service Worker registration error: ${error.stack || error.message}`, 'error');
+        throw error;
     }
 }
 
