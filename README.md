@@ -106,8 +106,8 @@ npx serve .
 ## Security Notes
 
 - **HTTPS Required**: Push notifications require HTTPS in production
-- **API Key Storage**: API keys are not persisted for security
-- **Settings Persistence**: Advanced settings are saved to localStorage
+- **API Key Persistence**: API keys and form inputs persist in your browser's localStorage for convenience. Use the in-app "Clear Saved Settings" button or clear site data to remove them.
+- **Settings Persistence**: Advanced settings and saved environments are stored locally in the browser
 - **Service Worker**: Handles offline functionality and push notifications
 
 ## Troubleshooting

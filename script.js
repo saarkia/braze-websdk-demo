@@ -2,6 +2,189 @@
 let brazeInstance = null;
 let isInitialized = false;
 let debugStartTime = Date.now();
+const APP_STATE_STORAGE_KEY = 'braze-demo-app-state-v1';
+let saveStateTimeout = null;
+let lastPersistedStateSignature = '';
+
+function getLocalStorageSafe() {
+    try {
+        return window.localStorage;
+    } catch (error) {
+        debugLog('STATE', `LocalStorage unavailable: ${error.message}`, 'warning');
+        return null;
+    }
+}
+
+function encodeStateObject(obj) {
+    try {
+        const json = JSON.stringify(obj);
+        return window.btoa(unescape(encodeURIComponent(json)));
+    } catch (error) {
+        debugLog('STATE', `Failed to encode state: ${error.message}`, 'warning');
+        return null;
+    }
+}
+
+function decodeStateObject(raw) {
+    try {
+        const json = decodeURIComponent(escape(window.atob(raw)));
+        return JSON.parse(json);
+    } catch (error) {
+        debugLog('STATE', `Failed to decode state: ${error.message}`, 'warning');
+        return null;
+    }
+}
+
+function scheduleAppStateSave() {
+    if (saveStateTimeout) {
+        clearTimeout(saveStateTimeout);
+    }
+    saveStateTimeout = setTimeout(() => saveAppState(true), 200);
+}
+
+function saveAppState(force = false) {
+    if (!force) {
+        scheduleAppStateSave();
+        return;
+    }
+
+    const storage = getLocalStorageSafe();
+    if (!storage) {
+        return;
+    }
+
+    const apiKeyInput = document.getElementById('apiKey');
+    const sdkEndpointSelect = document.getElementById('sdkEndpoint');
+    const userIdInput = document.getElementById('userId');
+    const environmentSelect = document.getElementById('environmentSelect');
+
+    if (!apiKeyInput || !sdkEndpointSelect || !userIdInput || !environmentSelect) {
+        return;
+    }
+
+    const state = {
+        version: 1,
+        lastUpdated: new Date().toISOString(),
+        apiKey: apiKeyInput.value || '',
+        sdkEndpoint: sdkEndpointSelect.value || '',
+        userId: userIdInput.value || '',
+        environmentName: environmentSelect.value || ''
+    };
+
+    const signature = JSON.stringify([
+        state.apiKey,
+        state.sdkEndpoint,
+        state.userId,
+        state.environmentName
+    ]);
+
+    if (signature === lastPersistedStateSignature) {
+        return;
+    }
+
+    const encoded = encodeStateObject(state);
+    if (!encoded) {
+        return;
+    }
+
+    try {
+        storage.setItem(APP_STATE_STORAGE_KEY, encoded);
+        lastPersistedStateSignature = signature;
+        const keyPreview = state.apiKey ? `${state.apiKey.substring(0, 4)}...` : 'none';
+        debugLog('STATE', `Persisted SDK state (API key: ${keyPreview})`, 'info');
+    } catch (error) {
+        debugLog('STATE', `Failed to save state: ${error.message}`, 'warning');
+    }
+}
+
+function loadAppState() {
+    const storage = getLocalStorageSafe();
+    if (!storage) {
+        return false;
+    }
+
+    const encoded = storage.getItem(APP_STATE_STORAGE_KEY);
+    if (!encoded) {
+        return false;
+    }
+
+    const state = decodeStateObject(encoded);
+    if (!state) {
+        return false;
+    }
+
+    const apiKeyInput = document.getElementById('apiKey');
+    const sdkEndpointSelect = document.getElementById('sdkEndpoint');
+    const userIdInput = document.getElementById('userId');
+    const environmentSelect = document.getElementById('environmentSelect');
+
+    if (!apiKeyInput || !sdkEndpointSelect || !userIdInput || !environmentSelect) {
+        return false;
+    }
+
+    apiKeyInput.value = state.apiKey || '';
+    userIdInput.value = state.userId || '';
+
+    if (state.sdkEndpoint) {
+        sdkEndpointSelect.value = state.sdkEndpoint;
+    }
+
+    if (state.environmentName) {
+        environmentSelect.value = state.environmentName;
+    }
+
+    updateSelectedEndpoint();
+
+    lastPersistedStateSignature = JSON.stringify([
+        apiKeyInput.value || '',
+        sdkEndpointSelect.value || '',
+        userIdInput.value || '',
+        environmentSelect.value || ''
+    ]);
+
+    if (state.apiKey || state.userId) {
+        logActivity('Info', 'Restored previous SDK configuration from this browser.', 'info');
+    }
+    debugLog('STATE', 'Loaded persisted SDK state from local storage.', 'info');
+
+    return true;
+}
+
+function clearAppState({ resetFields = true, suppressLog = false } = {}) {
+    const storage = getLocalStorageSafe();
+    if (storage) {
+        try {
+            storage.removeItem(APP_STATE_STORAGE_KEY);
+            storage.removeItem('braze-last-environment');
+        } catch (error) {
+            debugLog('STATE', `Failed to clear state: ${error.message}`, 'warning');
+        }
+    }
+
+    lastPersistedStateSignature = '';
+
+    if (resetFields) {
+        const apiKeyInput = document.getElementById('apiKey');
+        const sdkEndpointSelect = document.getElementById('sdkEndpoint');
+        const userIdInput = document.getElementById('userId');
+        const environmentSelect = document.getElementById('environmentSelect');
+
+        if (apiKeyInput) apiKeyInput.value = '';
+        if (userIdInput) userIdInput.value = '';
+        if (environmentSelect) environmentSelect.value = '';
+
+        if (sdkEndpointSelect) {
+            sdkEndpointSelect.selectedIndex = 0;
+        }
+
+        updateSelectedEndpoint();
+    }
+
+    if (!suppressLog) {
+        logActivity('Info', 'Saved settings cleared from this browser.', 'info');
+        debugLog('STATE', 'Cleared persisted SDK state.', 'info');
+    }
+}
 
 // Debug Console Functions (define early so they're available immediately)
 function debugLog(type, message, level = 'info') {
@@ -138,6 +321,8 @@ function setupEventListeners() {
     if ('serviceWorker' in navigator) {
         registerServiceWorker();
     }
+
+    setupStatePersistence();
 }
 
 // Tab Switching Functionality
@@ -167,6 +352,36 @@ function switchTab(tabName) {
     const activeContent = document.getElementById(`${tabName}-tab`);
     if (activeContent) {
         activeContent.classList.add('active');
+    }
+}
+
+function setupStatePersistence() {
+    const apiKeyInput = document.getElementById('apiKey');
+    const sdkEndpointSelect = document.getElementById('sdkEndpoint');
+    const userIdInput = document.getElementById('userId');
+    const environmentSelect = document.getElementById('environmentSelect');
+    const clearSavedSettingsButton = document.getElementById('clearSavedSettings');
+
+    const inputs = [
+        { element: apiKeyInput, events: ['input', 'blur'] },
+        { element: sdkEndpointSelect, events: ['change', 'blur'] },
+        { element: userIdInput, events: ['input', 'blur'] },
+        { element: environmentSelect, events: ['change', 'blur'] }
+    ];
+
+    inputs.forEach(({ element, events }) => {
+        if (!element) return;
+        events.forEach(eventName => {
+            element.addEventListener(eventName, scheduleAppStateSave);
+        });
+    });
+
+    window.addEventListener('beforeunload', () => saveAppState(true));
+
+    if (clearSavedSettingsButton) {
+        clearSavedSettingsButton.addEventListener('click', () => {
+            clearAppState({ resetFields: true });
+        });
     }
 }
 
@@ -891,12 +1106,20 @@ document.addEventListener('DOMContentLoaded', function() {
     loadSettings();
     loadEnvironmentList();
     
-    // Auto-load last selected environment
-    const lastEnv = localStorage.getItem('braze-last-environment');
-    if (lastEnv) {
-        const select = document.getElementById('environmentSelect');
-        select.value = lastEnv;
-        loadEnvironment(true); // Pass true to indicate auto-load
+    const stateApplied = loadAppState();
+
+    if (!stateApplied) {
+        const storage = getLocalStorageSafe();
+        if (storage) {
+            const lastEnv = storage.getItem('braze-last-environment');
+            if (lastEnv) {
+                const select = document.getElementById('environmentSelect');
+                if (select) {
+                    select.value = lastEnv;
+                    loadEnvironment(true); // Pass true to indicate auto-load
+                }
+            }
+        }
     }
 });
 
@@ -1007,6 +1230,8 @@ function saveEnvironment() {
     
     // Set the dropdown to the newly saved environment
     document.getElementById('environmentSelect').value = name;
+
+    saveAppState(true);
     
     logActivity('Success', `Environment "${name}" saved successfully.`, 'success');
     debugLog('ENV', `Saved environment: ${name}`, 'success');
@@ -1032,6 +1257,8 @@ function loadEnvironment(isAutoLoad = false) {
     
     updateSelectedEndpoint();
     
+    saveAppState(true);
+
     // Save as last selected environment
     localStorage.setItem('braze-last-environment', name);
     
@@ -1073,6 +1300,9 @@ function deleteEnvironment() {
     // Clear the form fields
     document.getElementById('apiKey').value = '';
     document.getElementById('userId').value = '';
+    updateSelectedEndpoint();
+
+    saveAppState(true);
     
     logActivity('Info', `Environment "${name}" deleted.`, 'info');
     debugLog('ENV', `Deleted environment: ${name}`, 'warning');
