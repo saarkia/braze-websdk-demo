@@ -40,6 +40,21 @@
                 <div id="bannerPlacementPlaceholder" class="banner-placeholder">
                     Initialize the SDK with <strong>Allow User Supplied JavaScript</strong> enabled to load banners.
                 </div>
+                <div class="banner-height-controls">
+                    <label for="bannerHeightRange">
+                        <i class="fas fa-arrows-alt-v"></i>
+                        Adjust Banner Height
+                    </label>
+                    <div class="banner-height-inputs">
+                        <input type="range" id="bannerHeightRange" min="120" max="800" step="10">
+                        <input type="number" id="bannerHeightNumber" min="120" max="800" step="10">
+                        <button type="button" class="btn-secondary btn-compact" id="resetBannerHeightButton">
+                            <i class="fas fa-magic"></i>
+                            Auto Height
+                        </button>
+                    </div>
+                    <p class="banner-height-hint">Use the slider or number input to set a specific height when needed. Click “Auto Height” to revert to the banner's natural size.</p>
+                </div>
             </div>
         </section>
 
@@ -49,9 +64,12 @@
                 <i class="fas fa-rocket"></i>
                 <h1>Braze WebSDK Demo</h1>
             </div>
-            <button class="settings-toggle" id="settingsToggle">
-                <i class="fas fa-cog"></i>
-            </button>
+            <div class="header-actions">
+                <span id="appVersionTag" class="app-version-tag" title="Application version">v0.0.0</span>
+                <button class="settings-toggle" id="settingsToggle" title="Advanced Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
         </header>
 
         <!-- Environment Selector -->

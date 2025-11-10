@@ -8,6 +8,13 @@ let lastPersistedStateSignature = '';
 const BANNER_PLACEMENT_ID = 'bannerdemo';
 let bannerSubscriptionId = null;
 let bannerHeightAdjustmentTimers = [];
+let bannerManualHeight = null;
+let autoInitAttempted = false;
+
+const BANNER_HEIGHT_STORAGE_KEY = 'braze-banner-height';
+const BANNER_HEIGHT_MIN = 120;
+const BANNER_HEIGHT_MAX = 800;
+const APP_VERSION = '2025.02.07.1';
 
 function updateBannerStatus(message, variant = '') {
     const statusElement = document.getElementById('bannerPlacementStatus');
@@ -33,7 +40,7 @@ function clearBannerHeightAdjustments() {
 
 function adjustBannerContainerHeight() {
     const container = document.getElementById('bannerPlacementContainer');
-    if (!container) return;
+    if (!container || bannerManualHeight !== null) return;
 
     const bannerElement = container.firstElementChild;
     if (!bannerElement) return;
@@ -42,18 +49,37 @@ function adjustBannerContainerHeight() {
     const computedHeight = Math.ceil(rect.height);
 
     if (Number.isFinite(computedHeight) && computedHeight > 0) {
-        container.style.minHeight = `${computedHeight}px`;
-        container.style.height = `${computedHeight}px`;
+        applyBannerHeightStyles(computedHeight);
     }
 }
 
 function scheduleBannerHeightAdjustments() {
+    if (bannerManualHeight !== null) {
+        return;
+    }
     clearBannerHeightAdjustments();
     const delays = [0, 100, 350, 750, 1500];
     delays.forEach(delay => {
         const timerId = setTimeout(adjustBannerContainerHeight, delay);
         bannerHeightAdjustmentTimers.push(timerId);
     });
+}
+
+function applyBannerHeightStyles(height) {
+    const container = document.getElementById('bannerPlacementContainer');
+    if (!container) return;
+    const sanitized = clampBannerHeight(height);
+    if (!Number.isFinite(sanitized)) return;
+
+    container.style.minHeight = `${sanitized}px`;
+    container.style.height = `${sanitized}px`;
+}
+
+function clearBannerHeightStyles() {
+    const container = document.getElementById('bannerPlacementContainer');
+    if (!container) return;
+    container.style.minHeight = '80px';
+    container.style.height = 'auto';
 }
 
 function resetBannerContainer(message = 'Initialize the SDK with <strong>Allow User Supplied JavaScript</strong> enabled to load banners.') {
@@ -65,8 +91,11 @@ function resetBannerContainer(message = 'Initialize the SDK with <strong>Allow U
 
     if (container) {
         container.innerHTML = '';
-        container.style.minHeight = '80px';
-        container.style.height = 'auto';
+        if (bannerManualHeight !== null) {
+            applyBannerHeightStyles(bannerManualHeight);
+        } else {
+            clearBannerHeightStyles();
+        }
     }
 
     if (section) {
@@ -104,8 +133,11 @@ function renderBannerPlacement() {
         placeholder.textContent = 'No banner is currently available for this placement.';
         updateBannerStatus('No eligible banner.');
         clearBannerHeightAdjustments();
-        container.style.minHeight = '80px';
-        container.style.height = 'auto';
+        if (bannerManualHeight !== null) {
+            applyBannerHeightStyles(bannerManualHeight);
+        } else {
+            clearBannerHeightStyles();
+        }
         return;
     }
 
@@ -115,8 +147,11 @@ function renderBannerPlacement() {
         placeholder.textContent = 'User is in the control variant. No banner will be displayed.';
         updateBannerStatus('Control variant received.');
         clearBannerHeightAdjustments();
-        container.style.minHeight = '80px';
-        container.style.height = 'auto';
+        if (bannerManualHeight !== null) {
+            applyBannerHeightStyles(bannerManualHeight);
+        } else {
+            clearBannerHeightStyles();
+        }
         return;
     }
 
@@ -126,7 +161,11 @@ function renderBannerPlacement() {
         placeholder.style.display = 'none';
         updateBannerStatus('Banner loaded successfully.', 'success');
         debugLog('BANNER', `Inserted banner for placement ${BANNER_PLACEMENT_ID}`, 'success');
-        scheduleBannerHeightAdjustments();
+        if (bannerManualHeight !== null) {
+            applyBannerHeightStyles(bannerManualHeight);
+        } else {
+            scheduleBannerHeightAdjustments();
+        }
     } catch (error) {
         section.classList.remove('has-banner');
         placeholder.style.display = 'block';
@@ -204,6 +243,139 @@ function initializeBannerPlacement() {
 function prepareBannerPlacementUI() {
     resetBannerContainer();
     updateBannerStatus('Awaiting SDK initialization…');
+}
+
+function displayAppVersion() {
+    const versionElement = document.getElementById('appVersionTag');
+    if (versionElement) {
+        versionElement.textContent = APP_VERSION;
+        versionElement.title = `Application version ${APP_VERSION}`;
+    }
+}
+
+function attemptAutoInitialize() {
+    if (autoInitAttempted || isInitialized) {
+        return;
+    }
+
+    const apiKeyInput = document.getElementById('apiKey');
+    const sdkEndpointSelect = document.getElementById('sdkEndpoint');
+
+    if (!apiKeyInput || !sdkEndpointSelect) {
+        return;
+    }
+
+    const apiKey = apiKeyInput.value.trim();
+    const sdkEndpoint = sdkEndpointSelect.value;
+
+    if (!apiKey || !sdkEndpoint) {
+        return;
+    }
+
+    autoInitAttempted = true;
+    debugLog('INIT', 'Attempting automatic SDK initialization with stored credentials.', 'info');
+    updateBannerStatus('Attempting automatic initialization…', 'loading');
+
+    setTimeout(() => {
+        initializeBrazeSDK();
+    }, 200);
+}
+
+function clampBannerHeight(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return null;
+    return Math.min(Math.max(Math.round(numeric), BANNER_HEIGHT_MIN), BANNER_HEIGHT_MAX);
+}
+
+function updateBannerHeightControls(height) {
+    const range = document.getElementById('bannerHeightRange');
+    const number = document.getElementById('bannerHeightNumber');
+    const hasManual = Number.isFinite(height);
+
+    if (range) {
+        range.value = hasManual ? String(height) : String(range.min || BANNER_HEIGHT_MIN);
+        range.dataset.manual = hasManual ? 'true' : 'false';
+    }
+
+    if (number) {
+        number.value = hasManual ? String(height) : '';
+        number.placeholder = hasManual ? '' : 'Auto';
+    }
+}
+
+function storeBannerManualHeight(height) {
+    const storage = getLocalStorageSafe();
+    if (!storage) return;
+    if (Number.isFinite(height)) {
+        storage.setItem(BANNER_HEIGHT_STORAGE_KEY, String(height));
+    } else {
+        storage.removeItem(BANNER_HEIGHT_STORAGE_KEY);
+    }
+}
+
+function setManualBannerHeight(height, { persist = true, showStatus = true } = {}) {
+    const clamped = clampBannerHeight(height);
+    if (!Number.isFinite(clamped)) {
+        return;
+    }
+
+    bannerManualHeight = clamped;
+    if (persist) {
+        storeBannerManualHeight(clamped);
+    }
+
+    clearBannerHeightAdjustments();
+    applyBannerHeightStyles(clamped);
+    updateBannerHeightControls(clamped);
+
+    if (showStatus) {
+        updateBannerStatus(`Manual banner height set to ${clamped}px.`);
+    }
+
+    debugLog('BANNER', `Manual banner height applied: ${clamped}px`, 'info');
+}
+
+function clearManualBannerHeight({ showStatus = true } = {}) {
+    if (bannerManualHeight === null) {
+        return;
+    }
+
+    bannerManualHeight = null;
+    storeBannerManualHeight(null);
+    updateBannerHeightControls(null);
+    clearBannerHeightAdjustments();
+    clearBannerHeightStyles();
+
+    if (document.getElementById('bannerPlacementContainer')?.firstElementChild) {
+        scheduleBannerHeightAdjustments();
+    }
+
+    if (showStatus) {
+        updateBannerStatus('Banner height reset to auto sizing.', 'success');
+    }
+
+    debugLog('BANNER', 'Manual banner height cleared. Returning to automatic sizing.', 'info');
+}
+
+function loadBannerHeightPreference() {
+    const storage = getLocalStorageSafe();
+    if (!storage) {
+        updateBannerHeightControls(null);
+        return;
+    }
+
+    const stored = storage.getItem(BANNER_HEIGHT_STORAGE_KEY);
+    if (!stored) {
+        updateBannerHeightControls(null);
+        return;
+    }
+
+    const parsed = clampBannerHeight(stored);
+    if (Number.isFinite(parsed)) {
+        setManualBannerHeight(parsed, { persist: false, showStatus: false });
+    } else {
+        updateBannerHeightControls(null);
+    }
 }
 
 
@@ -517,7 +689,9 @@ function waitForBrazeSDK(callback, maxAttempts = 50) {
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
     debugLog('APP', 'DOM Content Loaded - Starting initialization', 'info');
+    displayAppVersion();
     prepareBannerPlacementUI();
+    loadBannerHeightPreference();
     
     // Wait for Braze SDK to be available
     waitForBrazeSDK(() => {
@@ -548,6 +722,7 @@ function setupEventListeners() {
     }
 
     setupStatePersistence();
+    setupBannerHeightControls();
 
     const refreshBannerButton = document.getElementById('refreshBannerButton');
     if (refreshBannerButton) {
@@ -629,6 +804,51 @@ function setupStatePersistence() {
             clearAppState({ resetFields: true });
         });
     }
+}
+
+function setupBannerHeightControls() {
+    const range = document.getElementById('bannerHeightRange');
+    const number = document.getElementById('bannerHeightNumber');
+    const resetButton = document.getElementById('resetBannerHeightButton');
+
+    if (range) {
+        range.addEventListener('change', () => {
+            const clamped = clampBannerHeight(range.value);
+            if (Number.isFinite(clamped)) {
+                setManualBannerHeight(clamped, { persist: true, showStatus: false });
+                updateBannerStatus(`Manual banner height set to ${clamped}px.`);
+                range.value = String(clamped);
+                if (number) {
+                    number.value = String(clamped);
+                }
+            }
+        });
+    }
+
+    if (number) {
+        number.addEventListener('change', () => {
+            const clamped = clampBannerHeight(number.value);
+            if (Number.isFinite(clamped)) {
+                setManualBannerHeight(clamped, { persist: true, showStatus: false });
+                updateBannerStatus(`Manual banner height set to ${clamped}px.`);
+                if (range) {
+                    range.value = String(clamped);
+                }
+                number.value = String(clamped);
+            } else {
+                number.value = bannerManualHeight !== null ? String(bannerManualHeight) : '';
+            }
+        });
+    }
+
+    if (resetButton) {
+        resetButton.addEventListener('click', () => {
+            clearManualBannerHeight({ showStatus: true });
+            updateBannerHeightControls(null);
+        });
+    }
+
+    updateBannerHeightControls(bannerManualHeight);
 }
 
 // Check if Braze SDK is loaded
@@ -1381,6 +1601,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
+
+    loadBannerHeightPreference();
+    attemptAutoInitialize();
 });
 
 // Save settings when they change
