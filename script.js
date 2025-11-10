@@ -7,6 +7,7 @@ let saveStateTimeout = null;
 let lastPersistedStateSignature = '';
 const BANNER_PLACEMENT_ID = 'bannerdemo';
 let bannerSubscriptionId = null;
+let bannerHeightAdjustmentTimers = [];
 
 function updateBannerStatus(message, variant = '') {
     const statusElement = document.getElementById('bannerPlacementStatus');
@@ -23,13 +24,49 @@ function updateBannerStatus(message, variant = '') {
     }
 }
 
+function clearBannerHeightAdjustments() {
+    if (bannerHeightAdjustmentTimers.length > 0) {
+        bannerHeightAdjustmentTimers.forEach(timerId => clearTimeout(timerId));
+        bannerHeightAdjustmentTimers = [];
+    }
+}
+
+function adjustBannerContainerHeight() {
+    const container = document.getElementById('bannerPlacementContainer');
+    if (!container) return;
+
+    const bannerElement = container.firstElementChild;
+    if (!bannerElement) return;
+
+    const rect = bannerElement.getBoundingClientRect();
+    const computedHeight = Math.ceil(rect.height);
+
+    if (Number.isFinite(computedHeight) && computedHeight > 0) {
+        container.style.minHeight = `${computedHeight}px`;
+        container.style.height = `${computedHeight}px`;
+    }
+}
+
+function scheduleBannerHeightAdjustments() {
+    clearBannerHeightAdjustments();
+    const delays = [0, 100, 350, 750, 1500];
+    delays.forEach(delay => {
+        const timerId = setTimeout(adjustBannerContainerHeight, delay);
+        bannerHeightAdjustmentTimers.push(timerId);
+    });
+}
+
 function resetBannerContainer(message = 'Initialize the SDK with <strong>Allow User Supplied JavaScript</strong> enabled to load banners.') {
     const section = document.getElementById('bannerPlacementSection');
     const container = document.getElementById('bannerPlacementContainer');
     const placeholder = document.getElementById('bannerPlacementPlaceholder');
 
+    clearBannerHeightAdjustments();
+
     if (container) {
         container.innerHTML = '';
+        container.style.minHeight = '80px';
+        container.style.height = 'auto';
     }
 
     if (section) {
@@ -66,6 +103,9 @@ function renderBannerPlacement() {
         placeholder.style.display = 'block';
         placeholder.textContent = 'No banner is currently available for this placement.';
         updateBannerStatus('No eligible banner.');
+        clearBannerHeightAdjustments();
+        container.style.minHeight = '80px';
+        container.style.height = 'auto';
         return;
     }
 
@@ -74,6 +114,9 @@ function renderBannerPlacement() {
         placeholder.style.display = 'block';
         placeholder.textContent = 'User is in the control variant. No banner will be displayed.';
         updateBannerStatus('Control variant received.');
+        clearBannerHeightAdjustments();
+        container.style.minHeight = '80px';
+        container.style.height = 'auto';
         return;
     }
 
@@ -83,6 +126,7 @@ function renderBannerPlacement() {
         placeholder.style.display = 'none';
         updateBannerStatus('Banner loaded successfully.', 'success');
         debugLog('BANNER', `Inserted banner for placement ${BANNER_PLACEMENT_ID}`, 'success');
+        scheduleBannerHeightAdjustments();
     } catch (error) {
         section.classList.remove('has-banner');
         placeholder.style.display = 'block';

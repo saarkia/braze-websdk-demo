@@ -101,11 +101,14 @@ body {
     min-height: 120px;
     position: relative;
     transition: background 0.2s ease;
+    overflow: visible;
 }
 
 .banner-placement-container {
     width: 100%;
     min-height: 80px;
+    position: relative;
+    height: auto;
 }
 
 .banner-placeholder {
@@ -138,6 +141,18 @@ body {
 
 .banner-placement.success .banner-status {
     color: #198754;
+}
+
+.banner-placement-container * {
+    max-width: 100%;
+}
+
+.banner-placement-container img,
+.banner-placement-container video,
+.banner-placement-container iframe {
+    display: block;
+    width: 100%;
+    height: auto;
 }
 
 /* Header */
