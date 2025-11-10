@@ -1,6 +1,6 @@
 // Import Braze service worker for push notifications
 // This must be the first thing in the file
-importScripts('https://js.appboycdn.com/web-sdk/5.4/service-worker.js');
+importScripts('https://js.appboycdn.com/web-sdk/5.8/service-worker.js');
 
 // Braze WebSDK Demo Service Worker
 const CACHE_NAME = 'braze-demo-v2';

@@ -599,7 +599,7 @@ function checkSDKLoaded() {
     // Check for both new (braze) and legacy (appboy) SDK names
     if (typeof window.braze !== 'undefined' && window.braze) {
         // SDK is loaded (new naming)
-        sdkVersionElement.textContent = '5.4.0 ✅';
+        sdkVersionElement.textContent = '5.8.0 ✅';
         sdkVersionElement.style.color = '#198754';
         logActivity('Success', 'Braze SDK loaded successfully from CDN.', 'success');
         debugLog('SDK-CHECK', '✅ Braze SDK loaded successfully', 'success');
@@ -654,7 +654,7 @@ function retrySDKLoad() {
         logActivity('Info', 'Attempting to reload Braze SDK...', 'info');
         
         // First check if CDN is reachable
-        fetch('https://js.appboycdn.com/web-sdk/5.4/braze.min.js', { method: 'HEAD' })
+        fetch('https://js.appboycdn.com/web-sdk/5.8/braze.min.js', { method: 'HEAD' })
             .then(response => {
                 debugLog('SDK-RELOAD', `CDN response status: ${response.status}`, response.ok ? 'success' : 'error');
                 if (response.ok) {
@@ -673,7 +673,7 @@ function retrySDKLoad() {
 
 function loadSDKScript() {
     const script = document.createElement('script');
-    script.src = 'https://js.appboycdn.com/web-sdk/5.4/braze.min.js';
+    script.src = 'https://js.appboycdn.com/web-sdk/5.8/braze.min.js';
     script.async = true;
     
     script.onload = function() {
