@@ -26,6 +26,12 @@ A comprehensive, clean, and futuristic web application for demonstrating Braze W
 - **Data Flushing**: Force immediate data synchronization
 - **Automatic Display**: Messages configured in Braze dashboard will display automatically
 
+### 🪧 Banner Placements
+- **Placement Showcase**: Dedicated `bannerdemo` placement renders at the top of the page
+- **Manual Refresh**: Trigger banner refreshes without reloading the SDK
+- **Control Handling**: Automatically hides when the user is in a control variant
+- **Status Indicators**: Real-time status pill and activity log entries for banner lifecycle events
+
 ### 🔔 Push Notifications
 - **Permission Management**: Request and manage browser push permissions
 - **Registration Flow**: Complete push notification registration process
@@ -72,7 +78,7 @@ npx serve .
 - **Session Timeout**: Session duration in seconds
 - **Trigger Interval**: Minimum time between trigger actions
 - **SDK Authentication**: Enable SDK authentication
-- **User Supplied JavaScript**: Allow custom JavaScript in messages
+- **User Supplied JavaScript**: Allow custom JavaScript in messages (required for Banners)
 - **Push Token Maintenance**: Manage push token lifecycle
 
 ## Usage Examples
@@ -95,6 +101,13 @@ npx serve .
 2. Click "Request Permission" (browser will prompt)
 3. Click "Register for Push" to complete setup
 4. Click "Test Notification" to send a test message
+
+### Displaying Banner Placements
+1. Enable **Allow User Supplied JavaScript** in Advanced Settings
+2. Initialize the SDK
+3. The `bannerdemo` placement renders automatically at the top of the page
+4. Use **Refresh Banner** to manually request updated banner content
+5. Review banner status changes within the banner header and Activity Log
 
 ## Browser Compatibility
 

@@ -5,6 +5,163 @@ let debugStartTime = Date.now();
 const APP_STATE_STORAGE_KEY = 'braze-demo-app-state-v1';
 let saveStateTimeout = null;
 let lastPersistedStateSignature = '';
+const BANNER_PLACEMENT_ID = 'bannerdemo';
+let bannerSubscriptionId = null;
+
+function updateBannerStatus(message, variant = '') {
+    const statusElement = document.getElementById('bannerPlacementStatus');
+    const section = document.getElementById('bannerPlacementSection');
+    if (!statusElement || !section) {
+        return;
+    }
+
+    statusElement.textContent = message;
+    ['loading', 'error', 'success'].forEach(cls => section.classList.remove(cls));
+    const allowedVariants = ['loading', 'error', 'success'];
+    if (variant && allowedVariants.includes(variant)) {
+        section.classList.add(variant);
+    }
+}
+
+function resetBannerContainer(message = 'Initialize the SDK with <strong>Allow User Supplied JavaScript</strong> enabled to load banners.') {
+    const section = document.getElementById('bannerPlacementSection');
+    const container = document.getElementById('bannerPlacementContainer');
+    const placeholder = document.getElementById('bannerPlacementPlaceholder');
+
+    if (container) {
+        container.innerHTML = '';
+    }
+
+    if (section) {
+        section.classList.remove('has-banner');
+    }
+
+    if (placeholder) {
+        placeholder.style.display = 'block';
+        placeholder.innerHTML = message;
+    }
+}
+
+function renderBannerPlacement() {
+    const container = document.getElementById('bannerPlacementContainer');
+    const section = document.getElementById('bannerPlacementSection');
+    const placeholder = document.getElementById('bannerPlacementPlaceholder');
+
+    if (!container || !placeholder || !section) {
+        return;
+    }
+
+    container.innerHTML = '';
+
+    if (!brazeInstance || typeof brazeInstance.getBanner !== 'function' || typeof brazeInstance.insertBanner !== 'function') {
+        updateBannerStatus('Current SDK does not support banner placements.', 'error');
+        placeholder.textContent = 'Upgrade to Braze Web SDK 5.8.1 or later to display banners.';
+        return;
+    }
+
+    const banner = brazeInstance.getBanner(BANNER_PLACEMENT_ID);
+
+    if (!banner) {
+        section.classList.remove('has-banner');
+        placeholder.style.display = 'block';
+        placeholder.textContent = 'No banner is currently available for this placement.';
+        updateBannerStatus('No eligible banner.');
+        return;
+    }
+
+    if (banner.isControl) {
+        section.classList.remove('has-banner');
+        placeholder.style.display = 'block';
+        placeholder.textContent = 'User is in the control variant. No banner will be displayed.';
+        updateBannerStatus('Control variant received.');
+        return;
+    }
+
+    try {
+        brazeInstance.insertBanner(banner, container);
+        section.classList.add('has-banner');
+        placeholder.style.display = 'none';
+        updateBannerStatus('Banner loaded successfully.', 'success');
+        debugLog('BANNER', `Inserted banner for placement ${BANNER_PLACEMENT_ID}`, 'success');
+    } catch (error) {
+        section.classList.remove('has-banner');
+        placeholder.style.display = 'block';
+        placeholder.textContent = `Failed to render banner: ${error.message}`;
+        updateBannerStatus('Banner render error.', 'error');
+        debugLog('BANNER', `Failed to insert banner: ${error.stack || error.message}`, 'error');
+    }
+}
+
+function subscribeToBannerUpdates() {
+    if (!brazeInstance || typeof brazeInstance.subscribeToBannersUpdates !== 'function') {
+        updateBannerStatus('Banner subscriptions are not supported by this SDK version.', 'error');
+        return;
+    }
+
+    if (bannerSubscriptionId && typeof brazeInstance.removeSubscription === 'function') {
+        brazeInstance.removeSubscription(bannerSubscriptionId);
+        bannerSubscriptionId = null;
+    }
+
+    bannerSubscriptionId = brazeInstance.subscribeToBannersUpdates(() => {
+        debugLog('BANNER', 'Received banner update event.', 'info');
+        renderBannerPlacement();
+    });
+}
+
+function requestBannerRefresh(source = 'automatic') {
+    const refreshButton = document.getElementById('refreshBannerButton');
+
+    if (!brazeInstance || typeof brazeInstance.requestBannersRefresh !== 'function') {
+        updateBannerStatus('Banner refresh is not supported by this SDK version.', 'error');
+        return;
+    }
+
+    try {
+        brazeInstance.requestBannersRefresh([BANNER_PLACEMENT_ID]);
+        const message = source === 'manual' ? 'Refreshing banner…' : 'Loading banner…';
+        updateBannerStatus(message, 'loading');
+        if (source === 'manual') {
+            logActivity('Info', `Manual banner refresh requested for placement: ${BANNER_PLACEMENT_ID}`, 'info');
+        }
+        if (refreshButton) {
+            refreshButton.disabled = true;
+            setTimeout(() => {
+                refreshButton.disabled = false;
+            }, 1500);
+        }
+    } catch (error) {
+        updateBannerStatus('Failed to request banner refresh.', 'error');
+        debugLog('BANNER', `Banner refresh failed: ${error.stack || error.message}`, 'error');
+    }
+}
+
+function initializeBannerPlacement() {
+    const allowUserCheckbox = document.getElementById('allowUserSuppliedJavascript');
+    const allowUserJS = allowUserCheckbox ? allowUserCheckbox.checked : false;
+
+    if (!brazeInstance) {
+        return;
+    }
+
+    if (!allowUserJS) {
+        resetBannerContainer('Enable <strong>Allow User Supplied JavaScript</strong> and refresh banners to display this placement.');
+        updateBannerStatus('Enable "Allow User Supplied JavaScript" to display banners.', 'error');
+        logActivity('Warning', 'Enable "Allow User Supplied JavaScript" in Advanced Settings to render banner placements.', 'warning');
+        return;
+    }
+
+    updateBannerStatus('Loading banner…', 'loading');
+    subscribeToBannerUpdates();
+    renderBannerPlacement();
+    requestBannerRefresh();
+}
+
+function prepareBannerPlacementUI() {
+    resetBannerContainer();
+    updateBannerStatus('Awaiting SDK initialization…');
+}
+
 
 function getLocalStorageSafe() {
     try {
@@ -316,6 +473,7 @@ function waitForBrazeSDK(callback, maxAttempts = 50) {
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
     debugLog('APP', 'DOM Content Loaded - Starting initialization', 'info');
+    prepareBannerPlacementUI();
     
     // Wait for Braze SDK to be available
     waitForBrazeSDK(() => {
@@ -346,6 +504,27 @@ function setupEventListeners() {
     }
 
     setupStatePersistence();
+
+    const refreshBannerButton = document.getElementById('refreshBannerButton');
+    if (refreshBannerButton) {
+        refreshBannerButton.addEventListener('click', () => {
+            if (!isInitialized) {
+                updateBannerStatus('Initialize the SDK before refreshing banners.');
+                logActivity('Warning', 'Initialize the SDK before refreshing banners.', 'warning');
+                return;
+            }
+
+            const allowUserCheckbox = document.getElementById('allowUserSuppliedJavascript');
+            if (!allowUserCheckbox || !allowUserCheckbox.checked) {
+                resetBannerContainer('Enable <strong>Allow User Supplied JavaScript</strong> to display banners.');
+                updateBannerStatus('Enable "Allow User Supplied JavaScript" to display banners.', 'error');
+                logActivity('Warning', 'Enable "Allow User Supplied JavaScript" before refreshing banners.', 'warning');
+                return;
+            }
+
+            requestBannerRefresh('manual');
+        });
+    }
 }
 
 // Tab Switching Functionality
@@ -557,6 +736,7 @@ async function initializeBrazeSDK() {
     
     showLoading(true);
     logActivity('Info', `Initializing with API Key: ${apiKey.substring(0, 8)}... and endpoint: ${sdkEndpoint}`, 'info');
+    updateBannerStatus('Initializing SDK…', 'loading');
     
     try {
         // Get advanced settings
@@ -616,6 +796,7 @@ async function initializeBrazeSDK() {
         debugLog('INIT', 'Calling braze.openSession()...', 'api');
         brazeInstance.openSession();
         debugLog('INIT', '✅ Session opened successfully', 'success');
+        initializeBannerPlacement();
         
         isInitialized = true;
         updateSDKStatus('Initialized');
@@ -653,6 +834,7 @@ async function initializeBrazeSDK() {
         logActivity('Error', `Failed to initialize Braze SDK: ${error.message}`, 'error');
         logActivity('Error', `Error stack: ${error.stack}`, 'error');
         updateSDKStatus('Error');
+        updateBannerStatus('Failed to initialize SDK. See logs for details.', 'error');
         
         // Additional debugging
         debugLog('INIT', '--- Debug Info ---', 'error');
@@ -1161,6 +1343,22 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('change', function(e) {
     if (e.target.closest('.settings-content')) {
         saveSettings();
+
+        if (e.target.id === 'allowUserSuppliedJavascript') {
+            if (e.target.checked) {
+                logActivity('Info', '"Allow User Supplied JavaScript" enabled.', 'info');
+                if (isInitialized) {
+                    initializeBannerPlacement();
+                } else {
+                    resetBannerContainer();
+                    updateBannerStatus('Awaiting SDK initialization…');
+                }
+            } else {
+                resetBannerContainer('Enable <strong>Allow User Supplied JavaScript</strong> to display banners.');
+                updateBannerStatus('Enable "Allow User Supplied JavaScript" to display banners.', 'error');
+                logActivity('Warning', '"Allow User Supplied JavaScript" disabled. Banners cannot be displayed.', 'warning');
+            }
+        }
     }
 });
 

@@ -17,6 +17,32 @@
 </head>
 <body>
     <div class="container">
+        <!-- Banner Placement -->
+        <section class="banner-placement" id="bannerPlacementSection">
+            <div class="banner-placement-header">
+                <div class="banner-label">
+                    <i class="fas fa-flag"></i>
+                    <div>
+                        <h2>Banner Placement</h2>
+                        <p class="banner-subtitle">Placement ID: <code>bannerdemo</code></p>
+                    </div>
+                </div>
+                <div class="banner-actions">
+                    <span id="bannerPlacementStatus" class="banner-status">Awaiting SDK initialization…</span>
+                    <button class="btn-secondary" id="refreshBannerButton">
+                        <i class="fas fa-sync"></i>
+                        Refresh Banner
+                    </button>
+                </div>
+            </div>
+            <div class="banner-container-wrapper" id="bannerContainerWrapper">
+                <div id="bannerPlacementContainer" class="banner-placement-container"></div>
+                <div id="bannerPlacementPlaceholder" class="banner-placeholder">
+                    Initialize the SDK with <strong>Allow User Supplied JavaScript</strong> enabled to load banners.
+                </div>
+            </div>
+        </section>
+
         <!-- Header -->
         <header class="header">
             <div class="logo">

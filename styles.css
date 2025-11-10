@@ -31,6 +31,115 @@ body {
     padding: 40px 20px;
 }
 
+/* Banner Placement */
+.banner-placement {
+    background: white;
+    border: 1px solid var(--amazon-mist);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 30px;
+    box-shadow: 0 1px 3px rgba(53, 30, 28, 0.05);
+    transition: box-shadow 0.3s ease;
+}
+
+.banner-placement:hover {
+    box-shadow: 0 8px 20px rgba(53, 30, 28, 0.08);
+}
+
+.banner-placement-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.banner-label {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.banner-label i {
+    font-size: 1.6rem;
+    color: var(--toxic-orange);
+}
+
+.banner-label h2 {
+    margin-bottom: 4px;
+    color: var(--black-kite);
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+.banner-subtitle {
+    margin: 0;
+    color: var(--garnet);
+    font-size: 0.85rem;
+}
+
+.banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.banner-status {
+    font-size: 0.85rem;
+    color: var(--garnet);
+    background: var(--amazon-mist);
+    padding: 6px 12px;
+    border-radius: 12px;
+}
+
+.banner-container-wrapper {
+    margin-top: 20px;
+    border: 1px dashed rgba(160, 201, 203, 0.6);
+    border-radius: 12px;
+    background: rgba(160, 201, 203, 0.08);
+    padding: 16px;
+    min-height: 120px;
+    position: relative;
+    transition: background 0.2s ease;
+}
+
+.banner-placement-container {
+    width: 100%;
+    min-height: 80px;
+}
+
+.banner-placeholder {
+    color: var(--garnet);
+    text-align: center;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.banner-placeholder strong {
+    color: var(--toxic-orange);
+}
+
+.banner-placement.has-banner .banner-container-wrapper {
+    border-style: solid;
+    background: white;
+}
+
+.banner-placement.has-banner .banner-placeholder {
+    display: none;
+}
+
+.banner-placement.loading .banner-status {
+    color: var(--toxic-orange);
+}
+
+.banner-placement.error .banner-status {
+    color: #dc3545;
+}
+
+.banner-placement.success .banner-status {
+    color: #198754;
+}
+
 /* Header */
 .header {
     display: flex;
