@@ -65,12 +65,44 @@
                 <h1>Braze WebSDK Demo</h1>
             </div>
             <div class="header-actions">
+                <button class="icon-button" id="openContentCardsButton" title="Message Inbox">
+                    <i class="fas fa-bell"></i>
+                    <span class="icon-button-badge" id="contentCardsBadge" hidden>0</span>
+                </button>
                 <span id="appVersionTag" class="app-version-tag" title="Application version">v0.0.0</span>
                 <button class="settings-toggle" id="settingsToggle" title="Advanced Settings">
                     <i class="fas fa-cog"></i>
                 </button>
             </div>
         </header>
+
+        <!-- Content Cards Inbox Overlay -->
+        <div id="contentCardsOverlay" class="inbox-overlay" aria-hidden="true">
+            <div class="inbox-backdrop" data-close-inbox></div>
+            <aside class="inbox-panel" role="dialog" aria-labelledby="contentCardsTitle">
+                <div class="inbox-panel-header">
+                    <div>
+                        <h3 id="contentCardsTitle">Message Inbox</h3>
+                        <p class="inbox-subtitle">Stay up to date with the latest personalized messages.</p>
+                    </div>
+                    <div class="inbox-header-actions">
+                        <button class="btn-secondary btn-compact" id="refreshContentCardsButton" title="Refresh Content Cards">
+                            <i class="fas fa-sync"></i>
+                            Refresh
+                        </button>
+                        <button class="btn-secondary btn-compact" id="markAllCardsReadButton" title="Mark all messages as read">
+                            <i class="fas fa-check-double"></i>
+                            Mark All Read
+                        </button>
+                        <button class="close-inbox" id="closeContentCardsButton" title="Close inbox">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="contentCardsEmptyState" class="inbox-empty-state">You’re all caught up! New messages will appear here.</div>
+                <div id="contentCardsList" class="inbox-list" role="list"></div>
+            </aside>
+        </div>
 
         <!-- Environment Selector -->
         <div class="environment-selector">
@@ -247,48 +279,6 @@
                             <i class="fas fa-upload"></i>
                             Flush Data
                         </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Content Cards Card -->
-            <div class="card">
-                <div class="card-header">
-                    <i class="fas fa-inbox"></i>
-                    <h2>Content Cards</h2>
-                </div>
-                <div class="card-content">
-                    <p class="card-description">
-                        Display Content Cards configured in your Braze dashboard. Cards can be used for persistent, personalized content feeds.
-                    </p>
-                    <div class="button-group">
-                        <button class="btn-secondary" onclick="toggleContentCards()">
-                            <i class="fas fa-eye"></i>
-                            Toggle Feed
-                        </button>
-                        <button class="btn-secondary" onclick="showContentCards()">
-                            <i class="fas fa-folder-open"></i>
-                            Show Feed
-                        </button>
-                        <button class="btn-secondary" onclick="hideContentCards()">
-                            <i class="fas fa-folder"></i>
-                            Hide Feed
-                        </button>
-                        <button class="btn-secondary" onclick="refreshContentCards()">
-                            <i class="fas fa-sync"></i>
-                            Refresh Cards
-                        </button>
-                    </div>
-                    
-                    <!-- Content Cards Feed Container -->
-                    <div id="content-cards-container" class="content-cards-wrapper" style="display: none;">
-                        <div class="content-cards-header">
-                            <h3>Your Content Feed</h3>
-                            <button class="close-cards" onclick="hideContentCards()">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                        <div id="content-cards-feed"></div>
                     </div>
                 </div>
             </div>

@@ -15,6 +15,11 @@ const BANNER_HEIGHT_STORAGE_KEY = 'braze-banner-height';
 const BANNER_HEIGHT_MIN = 120;
 const BANNER_HEIGHT_MAX = 800;
 const APP_VERSION = '2025.02.07.1';
+let contentCardsData = [];
+let contentCardsMap = new Map();
+let contentCardsSubscriptionId = null;
+let contentCardsObserver = null;
+let contentCardsImpressionsLogged = new Set();
 
 function updateBannerStatus(message, variant = '') {
     const statusElement = document.getElementById('bannerPlacementStatus');
@@ -691,7 +696,6 @@ document.addEventListener('DOMContentLoaded', function() {
     debugLog('APP', 'DOM Content Loaded - Starting initialization', 'info');
     displayAppVersion();
     prepareBannerPlacementUI();
-    loadBannerHeightPreference();
     
     // Wait for Braze SDK to be available
     waitForBrazeSDK(() => {
@@ -723,6 +727,35 @@ function setupEventListeners() {
 
     setupStatePersistence();
     setupBannerHeightControls();
+
+    const openContentCardsButton = document.getElementById('openContentCardsButton');
+    if (openContentCardsButton) {
+        openContentCardsButton.addEventListener('click', () => toggleContentCards());
+    }
+
+    const closeContentCardsButton = document.getElementById('closeContentCardsButton');
+    if (closeContentCardsButton) {
+        closeContentCardsButton.addEventListener('click', () => closeContentCardsInbox());
+    }
+
+    const refreshContentCardsButton = document.getElementById('refreshContentCardsButton');
+    if (refreshContentCardsButton) {
+        refreshContentCardsButton.addEventListener('click', () => refreshContentCards());
+    }
+
+    const markAllCardsReadButton = document.getElementById('markAllCardsReadButton');
+    if (markAllCardsReadButton) {
+        markAllCardsReadButton.addEventListener('click', () => markAllContentCardsAsRead());
+    }
+
+    const contentCardsOverlay = document.getElementById('contentCardsOverlay');
+    if (contentCardsOverlay) {
+        contentCardsOverlay.addEventListener('click', (event) => {
+            if (event.target === contentCardsOverlay || event.target.hasAttribute('data-close-inbox')) {
+                closeContentCardsInbox();
+            }
+        });
+    }
 
     const refreshBannerButton = document.getElementById('refreshBannerButton');
     if (refreshBannerButton) {
@@ -1061,6 +1094,7 @@ async function initializeBrazeSDK() {
         brazeInstance.openSession();
         debugLog('INIT', '✅ Session opened successfully', 'success');
         initializeBannerPlacement();
+        subscribeToContentCards();
         
         isInitialized = true;
         updateSDKStatus('Initialized');
@@ -1546,6 +1580,10 @@ document.addEventListener('keydown', function(e) {
         if (settingsPanel.classList.contains('open')) {
             toggleSettings();
         }
+        
+        if (isContentCardsInboxOpen()) {
+            closeContentCardsInbox();
+        }
     }
 });
 
@@ -1829,79 +1867,52 @@ function switchSidebarTab(tabName) {
     debugLog('UI', `Switched sidebar tab to: ${tabName}`, 'info');
 }
 
-// Content Cards Functions
-function showContentCards() {
+// Content Cards Functions - Custom Inbox
+function isContentCardsInboxOpen() {
+    const overlay = document.getElementById('contentCardsOverlay');
+    return overlay ? overlay.classList.contains('open') : false;
+}
+
+function openContentCardsInbox() {
     if (!isInitialized) {
         logActivity('Warning', 'Please initialize the SDK first.', 'warning');
         return;
     }
-    
-    try {
-        const feedElement = document.getElementById('content-cards-feed');
-        const container = document.getElementById('content-cards-container');
-        
-        debugLog('CARDS', 'Calling braze.showContentCards()...', 'api');
-        
-        // Show the Braze Content Cards feed
-        brazeInstance.showContentCards(feedElement);
-        
-        // Show the container
-        container.style.display = 'block';
-        
-        logActivity('Success', 'Content Cards feed displayed.', 'success');
-        debugLog('CARDS', '✅ Content Cards feed shown', 'success');
-        
-        // Subscribe to updates
-        subscribeToContentCards();
-        
-    } catch (error) {
-        logActivity('Error', `Failed to show Content Cards: ${error.message}`, 'error');
-        debugLog('CARDS', `Error: ${error.stack}`, 'error');
-    }
+    subscribeToContentCards();
+    const overlay = document.getElementById('contentCardsOverlay');
+    if (!overlay) return;
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('content-cards-inbox-open');
+    renderContentCardsInbox();
+    setupContentCardsObserver();
+    logActivity('Info', 'Content Cards inbox opened.', 'info');
 }
 
-function hideContentCards() {
-    if (!isInitialized) {
-        return;
-    }
-    
-    try {
-        debugLog('CARDS', 'Calling braze.hideContentCards()...', 'api');
-        brazeInstance.hideContentCards();
-        
-        // Hide the container
-        const container = document.getElementById('content-cards-container');
-        container.style.display = 'none';
-        
-        logActivity('Info', 'Content Cards feed hidden.', 'info');
-        debugLog('CARDS', 'Content Cards feed hidden', 'info');
-        
-    } catch (error) {
-        logActivity('Error', `Failed to hide Content Cards: ${error.message}`, 'error');
-        debugLog('CARDS', `Error: ${error.stack}`, 'error');
-    }
+function closeContentCardsInbox() {
+    const overlay = document.getElementById('contentCardsOverlay');
+    if (!overlay) return;
+    overlay.classList.remove('open');
+    overlay.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('content-cards-inbox-open');
+    teardownContentCardsObserver();
+    logActivity('Info', 'Content Cards inbox closed.', 'info');
 }
 
 function toggleContentCards() {
-    if (!isInitialized) {
-        logActivity('Warning', 'Please initialize the SDK first.', 'warning');
-        return;
+    if (isContentCardsInboxOpen()) {
+        closeContentCardsInbox();
+    } else {
+        openContentCardsInbox();
     }
-    
-    try {
-        const container = document.getElementById('content-cards-container');
-        const feedElement = document.getElementById('content-cards-feed');
-        
-        if (container.style.display === 'none') {
-            showContentCards();
-        } else {
-            hideContentCards();
-        }
-        
-    } catch (error) {
-        logActivity('Error', `Failed to toggle Content Cards: ${error.message}`, 'error');
-        debugLog('CARDS', `Error: ${error.stack}`, 'error');
-    }
+}
+
+function showContentCards() {
+    openContentCardsInbox();
+}
+
+function hideContentCards() {
+    closeContentCardsInbox();
 }
 
 function refreshContentCards() {
@@ -1910,80 +1921,266 @@ function refreshContentCards() {
         return;
     }
     
-    try {
-        debugLog('CARDS', 'Calling braze.requestContentCardsRefresh()...', 'api');
-        
-        if (typeof brazeInstance.requestContentCardsRefresh === 'function') {
-            brazeInstance.requestContentCardsRefresh();
-            logActivity('Success', 'Content Cards refresh requested.', 'success');
-            debugLog('CARDS', '✅ Content Cards refresh requested', 'success');
-            
-            // Also check cached cards to debug
-            setTimeout(() => {
-                const cachedCards = brazeInstance.getCachedContentCards();
-                debugLog('CARDS-DEBUG', `Cached Content Cards object:`, 'info');
-                debugLog('CARDS-DEBUG', `- cards array length: ${cachedCards.cards ? cachedCards.cards.length : 'N/A'}`, 'info');
-                debugLog('CARDS-DEBUG', `- lastUpdated: ${cachedCards.lastUpdated ? new Date(cachedCards.lastUpdated).toISOString() : 'N/A'}`, 'info');
-                
-                if (cachedCards.cards && cachedCards.cards.length > 0) {
-                    cachedCards.cards.forEach((card, i) => {
-                        debugLog('CARDS-DEBUG', `Card ${i + 1} details: ${JSON.stringify({
-                            id: card.id,
-                            viewed: card.viewed,
-                            title: card.title,
-                            imageUrl: card.imageUrl,
-                            created: card.created,
-                            expiresAt: card.expiresAt,
-                            pinned: card.pinned
-                        })}`, 'info');
-                    });
-                } else {
-                    debugLog('CARDS-DEBUG', '⚠️ No cards in cache. Possible reasons:', 'warning');
-                    debugLog('CARDS-DEBUG', '1. Campaign not started or not live', 'warning');
-                    debugLog('CARDS-DEBUG', '2. User not in target audience', 'warning');
-                    debugLog('CARDS-DEBUG', '3. Card delivery criteria not met', 'warning');
-                    debugLog('CARDS-DEBUG', `4. Current user ID: ${brazeInstance.getUser() ? 'Set' : 'Not set'}`, 'warning');
-                }
-            }, 1000);
-        } else {
-            // Fallback to getting cached cards
-            debugLog('CARDS', 'requestContentCardsRefresh not available, trying getCachedContentCards', 'warning');
-            const cards = brazeInstance.getCachedContentCards();
-            logActivity('Info', `Retrieved ${cards.cards ? cards.cards.length : 0} cached Content Cards.`, 'info');
-            debugLog('CARDS', `Cached cards: ${cards.cards ? cards.cards.length : 0}`, 'info');
-        }
-        
-    } catch (error) {
-        logActivity('Error', `Failed to refresh Content Cards: ${error.message}`, 'error');
-        debugLog('CARDS', `Error: ${error.stack}`, 'error');
+    if (typeof brazeInstance.requestContentCardsRefresh === 'function') {
+        debugLog('CARDS', 'Requesting content cards refresh...', 'api');
+        brazeInstance.requestContentCardsRefresh();
+        logActivity('Success', 'Content Cards refresh requested.', 'success');
+    } else {
+        debugLog('CARDS', 'requestContentCardsRefresh not available on this SDK version.', 'warning');
     }
 }
 
-function subscribeToContentCards() {
-    if (!isInitialized) {
+function markAllContentCardsAsRead() {
+    if (!isInitialized || contentCardsData.length === 0) {
         return;
     }
-    
-    try {
-        if (typeof brazeInstance.subscribeToContentCardsUpdates === 'function') {
-            debugLog('CARDS', 'Subscribing to Content Cards updates...', 'api');
-            
-            brazeInstance.subscribeToContentCardsUpdates((cards) => {
-                const cardCount = cards.cards ? cards.cards.length : 0;
-                logActivity('Info', `Content Cards updated: ${cardCount} cards available.`, 'info');
-                debugLog('CARDS', `Content Cards update: ${cardCount} cards`, 'info');
-                
-                // Log card details
-                if (cards.cards && cards.cards.length > 0) {
-                    cards.cards.forEach((card, index) => {
-                        debugLog('CARDS', `Card ${index + 1}: ${card.title || 'Untitled'} (${card.constructor.name})`, 'info');
-                    });
-                }
+    const unreadCards = contentCardsData.filter(card => !card.viewed);
+    if (unreadCards.length > 0) {
+        try {
+            brazeInstance.logContentCardImpressions(unreadCards);
+            unreadCards.forEach(card => {
+                card.viewed = true;
+                contentCardsImpressionsLogged.add(card.id);
             });
-            
-            debugLog('CARDS', '✅ Subscribed to Content Cards updates', 'success');
+            logActivity('Info', `Marked ${unreadCards.length} content cards as read.`, 'info');
+        } catch (error) {
+            debugLog('CARDS', `Failed to mark cards as read: ${error.message}`, 'error');
         }
+    }
+    updateContentCardsBadge();
+    renderContentCardsInbox();
+}
+
+function subscribeToContentCards() {
+    if (!brazeInstance || typeof brazeInstance.subscribeToContentCardsUpdates !== 'function') {
+        debugLog('CARDS', 'Content cards subscription not supported on this SDK version.', 'warning');
+        return;
+    }
+    if (contentCardsSubscriptionId) {
+        return;
+    }
+    debugLog('CARDS', 'Subscribing to Content Cards updates...', 'api');
+    contentCardsSubscriptionId = brazeInstance.subscribeToContentCardsUpdates((payload) => {
+        handleContentCardsUpdate(payload);
+    });
+    const cached = brazeInstance.getCachedContentCards?.();
+    if (cached && Array.isArray(cached.cards)) {
+        handleContentCardsUpdate(cached);
+    }
+    refreshContentCards();
+}
+
+function handleContentCardsUpdate(payload) {
+    const cards = payload && Array.isArray(payload.cards) ? payload.cards : [];
+    contentCardsData = cards.filter(card => !card.isControl);
+    contentCardsMap = new Map();
+    contentCardsData.forEach(card => {
+        contentCardsMap.set(card.id, card);
+        if (card.viewed) {
+            contentCardsImpressionsLogged.add(card.id);
+        }
+    });
+    logActivity('Info', `Content Cards updated: ${contentCardsData.length} cards available.`, 'info');
+    updateContentCardsBadge();
+    if (isContentCardsInboxOpen()) {
+        renderContentCardsInbox();
+        setupContentCardsObserver();
+    } else {
+        teardownContentCardsObserver();
+    }
+}
+
+function updateContentCardsBadge() {
+    const badge = document.getElementById('contentCardsBadge');
+    if (!badge) return;
+    const unreadCount = contentCardsData.filter(card => !card.viewed).length;
+    if (unreadCount > 0) {
+        badge.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
+        badge.hidden = false;
+    } else {
+        badge.hidden = true;
+    }
+}
+
+function renderContentCardsInbox() {
+    const list = document.getElementById('contentCardsList');
+    const emptyState = document.getElementById('contentCardsEmptyState');
+    if (!list || !emptyState) return;
+    list.innerHTML = '';
+    if (contentCardsData.length === 0) {
+        emptyState.style.display = 'block';
+        return;
+    }
+    emptyState.style.display = 'none';
+    contentCardsData.forEach(card => {
+        const item = document.createElement('article');
+        item.className = `content-card-item ${card.viewed ? 'viewed' : 'unread'}`;
+        item.dataset.cardId = card.id;
+        
+        const header = document.createElement('div');
+        header.className = 'content-card-item-header';
+        
+        const titleWrapper = document.createElement('div');
+        const title = document.createElement('h4');
+        title.className = 'content-card-item-title';
+        title.textContent = card.title || 'Untitled message';
+        titleWrapper.appendChild(title);
+        
+        const meta = document.createElement('div');
+        meta.className = 'content-card-item-meta';
+        if (!card.viewed) {
+            const unreadIndicator = document.createElement('span');
+            unreadIndicator.className = 'unread-indicator';
+            header.appendChild(unreadIndicator);
+        }
+        if (card.created) {
+            const createdDate = new Date(card.created);
+            if (!isNaN(createdDate.getTime())) {
+                const dateSpan = document.createElement('span');
+                dateSpan.textContent = createdDate.toLocaleString();
+                meta.appendChild(dateSpan);
+            }
+        }
+        if (card.pinned) {
+            const pinned = document.createElement('span');
+            pinned.textContent = 'Pinned';
+            meta.appendChild(pinned);
+        }
+        if (meta.childNodes.length > 0) {
+            titleWrapper.appendChild(meta);
+        }
+        
+        header.appendChild(titleWrapper);
+        
+        const body = document.createElement('div');
+        body.className = 'content-card-item-body';
+        body.textContent = card.description || card.excerpt || '';
+        
+        item.appendChild(header);
+        item.appendChild(body);
+        
+        if (card.imageUrl) {
+            const image = document.createElement('img');
+            image.src = card.imageUrl;
+            image.alt = card.title || 'Content Card image';
+            item.appendChild(image);
+        }
+        
+        if (card.extras && Object.keys(card.extras).length > 0) {
+            const extras = document.createElement('div');
+            extras.className = 'content-card-item-extras';
+            Object.entries(card.extras).forEach(([key, value]) => {
+                const chip = document.createElement('span');
+                chip.textContent = `${key}: ${value}`;
+                extras.appendChild(chip);
+            });
+            item.appendChild(extras);
+        }
+        
+        const footer = document.createElement('div');
+        footer.className = 'content-card-item-footer';
+        if (card.url) {
+            const link = document.createElement('a');
+            link.href = card.url;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.className = 'content-card-link';
+            link.innerHTML = `<i class="fas fa-external-link-alt"></i> Open`;
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                logContentCardClick(card, card.url);
+            });
+            footer.appendChild(link);
+        }
+        if (footer.childNodes.length > 0) {
+            item.appendChild(footer);
+        }
+        
+        item.addEventListener('click', (event) => {
+            // avoid duplicate click handling when link clicked
+            if (event.target.closest('a')) {
+                return;
+            }
+            if (card.url) {
+                logContentCardClick(card, card.url);
+            }
+        });
+        
+        list.appendChild(item);
+    });
+}
+
+function setupContentCardsObserver() {
+    teardownContentCardsObserver();
+    const list = document.getElementById('contentCardsList');
+    if (!list || contentCardsData.length === 0) return;
+    const items = list.querySelectorAll('.content-card-item');
+    if (items.length === 0) return;
+    contentCardsObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (!entry.isIntersecting) return;
+            const cardId = entry.target.dataset.cardId;
+            const card = contentCardsMap.get(cardId);
+            if (!card || card.viewed) {
+                if (contentCardsObserver) {
+                    contentCardsObserver.unobserve(entry.target);
+                }
+                return;
+            }
+            logContentCardImpression(card);
+            if (contentCardsObserver) {
+                contentCardsObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.6 });
+    items.forEach(item => {
+        const card = contentCardsMap.get(item.dataset.cardId);
+        if (card && !card.viewed) {
+            contentCardsObserver.observe(item);
+        }
+    });
+}
+
+function teardownContentCardsObserver() {
+    if (contentCardsObserver) {
+        contentCardsObserver.disconnect();
+        contentCardsObserver = null;
+    }
+}
+
+function logContentCardImpression(card) {
+    if (!card || card.viewed) return;
+    try {
+        brazeInstance.logContentCardImpressions([card]);
     } catch (error) {
-        debugLog('CARDS', `Failed to subscribe to Content Cards: ${error.message}`, 'error');
+        debugLog('CARDS', `Failed to log impression: ${error.message}`, 'error');
+    }
+    card.viewed = true;
+    contentCardsImpressionsLogged.add(card.id);
+    const item = document.querySelector(`.content-card-item[data-card-id="${card.id}"]`);
+    if (item) {
+        item.classList.remove('unread');
+        item.classList.add('viewed');
+    }
+    updateContentCardsBadge();
+}
+
+function logContentCardClick(card, url) {
+    if (!card) return;
+    try {
+        brazeInstance.logContentCardClick(card);
+    } catch (error) {
+        debugLog('CARDS', `Failed to log click: ${error.message}`, 'error');
+    }
+    card.viewed = true;
+    contentCardsImpressionsLogged.add(card.id);
+    updateContentCardsBadge();
+    const item = document.querySelector(`.content-card-item[data-card-id="${card.id}"]`);
+    if (item) {
+        item.classList.remove('unread');
+        item.classList.add('viewed');
+    }
+    if (url) {
+        window.open(url, '_blank', 'noopener,noreferrer');
     }
 }
