@@ -35,8 +35,6 @@ A comprehensive, clean, and futuristic web application for demonstrating Braze W
 ### 🎨 Personalisation
 - **Custom Display Name**: Brand the experience with your name in the header and inbox
 - **Colour Palettes**: Choose from four handcrafted themes that update live
-- **Light/Dark/Auto**: Respect system preferences or override with a click
-- **Background Grain**: Add Arc-style texture with an adjustable intensity slider
 
 ### 🔔 Push Notifications
 - **Permission Management**: Request and manage browser push permissions
@@ -45,7 +43,6 @@ A comprehensive, clean, and futuristic web application for demonstrating Braze W
 - **Service Worker Support**: Full offline and background notification support
 
 ### 🎨 User Interface
-- **Dark Mode**: Beautiful purple-themed dark interface
 - **Responsive Design**: Works on desktop and mobile devices
 - **Real-time Activity Log**: Track all SDK interactions and events
 - **Status Indicators**: Live SDK and push notification status
@@ -120,9 +117,8 @@ npx serve .
 
 ### Tweaking Personalisation
 1. Open the **Settings** panel (cog icon in the header)
-2. Update your **Display Name**, **Colour Palette**, or **Theme Mode**
-3. Dial in background **Grain** using the slider for subtle or bold texture
-4. Changes apply instantly and persist locally until you reset them
+2. Update your **Display Name** or **Colour Palette**
+3. Changes apply instantly and persist locally until you reset them
 
 ## Browser Compatibility
 

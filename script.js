@@ -16,9 +16,7 @@ const BANNER_HEIGHT_MIN = 120;
 const BANNER_HEIGHT_MAX = 800;
 const APP_VERSION = '2025.02.07.1';
 const DEFAULT_COLOR_THEME = 'sunrise';
-const DEFAULT_THEME_MODE = 'auto';
 const VALID_COLOR_THEMES = new Set(['sunrise', 'lakeside', 'evergreen', 'midnight']);
-const VALID_THEME_MODES = new Set(['auto', 'light', 'dark']);
 const defaultSettings = {
     enableLogging: true,
     sessionTimeout: 30,
@@ -27,11 +25,8 @@ const defaultSettings = {
     allowUserSuppliedJavascript: false,
     disablePushTokenMaintenance: false,
     userDisplayName: '',
-    colorTheme: DEFAULT_COLOR_THEME,
-    themeMode: DEFAULT_THEME_MODE,
-    grainIntensity: 0
+    colorTheme: DEFAULT_COLOR_THEME
 };
-const systemThemeMediaQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
 let contentCardsData = [];
 let contentCardsMap = new Map();
 let contentCardsSubscriptionId = null;
@@ -39,7 +34,6 @@ let contentCardsObserver = null;
 let contentCardsImpressionsLogged = new Set();
 
 applyColorTheme(DEFAULT_COLOR_THEME);
-applyThemeMode(DEFAULT_THEME_MODE);
 
 function updateBannerStatus(message, variant = '') {
     const statusElement = document.getElementById('bannerPlacementStatus');
@@ -120,41 +114,9 @@ function applyColorTheme(theme) {
     document.body.dataset.colorTheme = selectedTheme;
 }
 
-function updateThemeToneFromMode() {
-    const currentMode = document.body.dataset.themeMode || DEFAULT_THEME_MODE;
-    if (currentMode === 'auto') {
-        const prefersDark = systemThemeMediaQuery ? systemThemeMediaQuery.matches : false;
-        document.body.dataset.themeTone = prefersDark ? 'dark' : 'light';
-    } else {
-        document.body.dataset.themeTone = currentMode;
-    }
-}
-
-function applyThemeMode(mode) {
-    const selectedMode = VALID_THEME_MODES.has(mode) ? mode : DEFAULT_THEME_MODE;
-    document.body.dataset.themeMode = selectedMode;
-    updateThemeToneFromMode();
-}
-
 function applyPersonalizationSettings(settings = defaultSettings) {
     applyUserDisplayName(settings.userDisplayName || '');
     applyColorTheme(settings.colorTheme || DEFAULT_COLOR_THEME);
-    applyThemeMode(settings.themeMode || DEFAULT_THEME_MODE);
-    applyGrainIntensity(typeof settings.grainIntensity === 'number' ? settings.grainIntensity : 0);
-}
-
-if (systemThemeMediaQuery && typeof systemThemeMediaQuery.addEventListener === 'function') {
-    systemThemeMediaQuery.addEventListener('change', () => {
-        if ((document.body.dataset.themeMode || DEFAULT_THEME_MODE) === 'auto') {
-            updateThemeToneFromMode();
-        }
-    });
-} else if (systemThemeMediaQuery && typeof systemThemeMediaQuery.addListener === 'function') {
-    systemThemeMediaQuery.addListener(() => {
-        if ((document.body.dataset.themeMode || DEFAULT_THEME_MODE) === 'auto') {
-            updateThemeToneFromMode();
-        }
-    });
 }
 
 function clearBannerHeightStyles() {
@@ -188,27 +150,6 @@ function resetBannerContainer(message = 'Initialize the SDK with <strong>Allow U
         placeholder.style.display = 'block';
         placeholder.innerHTML = message;
     }
-}
-
-function applyGrainIntensity(rawValue) {
-    const slider = document.getElementById('grainIntensityRange');
-    const label = document.getElementById('grainIntensityLabel');
-    const value = Math.max(0, Math.min(100, Number(rawValue) || 0));
-    const opacity = (value / 100) * 0.35;
-    document.body.style.setProperty('--grain-opacity', opacity.toFixed(3));
-    if (slider) {
-        slider.value = String(value);
-    }
-    if (label) {
-        label.textContent = describeGrainIntensity(value);
-    }
-}
-
-function describeGrainIntensity(value) {
-    if (value <= 0) return 'Off';
-    if (value <= 25) return 'Subtle';
-    if (value <= 60) return 'Balanced';
-    return 'Bold';
 }
 
 function renderBannerPlacement() {
@@ -952,22 +893,6 @@ function setupStatePersistence() {
         });
     }
 
-    const themeModeSelect = document.getElementById('themeModeSelect');
-    if (themeModeSelect) {
-        themeModeSelect.addEventListener('change', () => {
-            applyThemeMode(themeModeSelect.value);
-            saveSettings();
-        });
-    }
-
-    const grainIntensityRange = document.getElementById('grainIntensityRange');
-    if (grainIntensityRange) {
-        grainIntensityRange.addEventListener('input', () => {
-            const value = Math.max(0, Math.min(100, Number(grainIntensityRange.value) || 0));
-            applyGrainIntensity(value);
-            saveSettings();
-        });
-    }
 }
 
 function setupBannerHeightControls() {
@@ -1728,9 +1653,7 @@ function saveSettings() {
         allowUserSuppliedJavascript: document.getElementById('allowUserSuppliedJavascript').checked,
         disablePushTokenMaintenance: document.getElementById('disablePushTokenMaintenance').checked,
         userDisplayName: (document.getElementById('displayNameInput')?.value || '').trim(),
-        colorTheme: document.getElementById('colorThemeSelect')?.value || DEFAULT_COLOR_THEME,
-        themeMode: document.getElementById('themeModeSelect')?.value || DEFAULT_THEME_MODE,
-        grainIntensity: parseInt(document.getElementById('grainIntensityRange')?.value, 10) || 0
+        colorTheme: document.getElementById('colorThemeSelect')?.value || DEFAULT_COLOR_THEME
     };
     
     localStorage.setItem('braze-demo-settings', JSON.stringify(settings));
@@ -1764,15 +1687,6 @@ function loadSettings() {
     if (colorThemeSelect) {
         colorThemeSelect.value = VALID_COLOR_THEMES.has(settings.colorTheme) ? settings.colorTheme : DEFAULT_COLOR_THEME;
     }
-    const themeModeSelect = document.getElementById('themeModeSelect');
-    if (themeModeSelect) {
-        themeModeSelect.value = VALID_THEME_MODES.has(settings.themeMode) ? settings.themeMode : DEFAULT_THEME_MODE;
-    }
-    const grainRange = document.getElementById('grainIntensityRange');
-    if (grainRange) {
-        grainRange.value = String(Math.max(0, Math.min(100, settings.grainIntensity ?? 0)));
-    }
-    
     applyPersonalizationSettings(settings);
     return settings;
 }
@@ -1788,12 +1702,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const storage = getLocalStorageSafe();
         if (storage) {
             const lastEnv = storage.getItem('braze-last-environment');
-            if (lastEnv) {
-                const select = document.getElementById('environmentSelect');
+    if (lastEnv) {
+        const select = document.getElementById('environmentSelect');
                 if (select) {
-                    select.value = lastEnv;
-                    loadEnvironment(true); // Pass true to indicate auto-load
-                }
+        select.value = lastEnv;
+        loadEnvironment(true); // Pass true to indicate auto-load
+    }
             }
         }
     }
@@ -1953,7 +1867,7 @@ function loadEnvironment(isAutoLoad = false) {
     updateSelectedEndpoint();
     
     saveAppState(true);
-
+    
     // Save as last selected environment
     localStorage.setItem('braze-last-environment', name);
     
@@ -2101,7 +2015,7 @@ function markAllContentCardsAsRead() {
                 contentCardsImpressionsLogged.add(card.id);
             });
             logActivity('Info', `Marked ${unreadCards.length} content cards as read.`, 'info');
-        } catch (error) {
+    } catch (error) {
             debugLog('CARDS', `Failed to mark cards as read: ${error.message}`, 'error');
         }
     }
@@ -2143,7 +2057,7 @@ function handleContentCardsUpdate(payload) {
     if (isContentCardsInboxOpen()) {
         renderContentCardsInbox();
         setupContentCardsObserver();
-    } else {
+        } else {
         teardownContentCardsObserver();
     }
 }
@@ -2257,8 +2171,8 @@ function renderContentCardsInbox() {
         item.addEventListener('click', (event) => {
             // avoid duplicate click handling when link clicked
             if (event.target.closest('a')) {
-                return;
-            }
+        return;
+    }
             if (card.url) {
                 logContentCardClick(card, card.url);
             }

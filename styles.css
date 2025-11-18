@@ -12,7 +12,6 @@
     --toxic-orange: #FF6037;
     --garnet: #733635;
     --black-kite: #351E1C;
-    --grain-opacity: 0;
 }
 
 body[data-color-theme="sunrise"] {
@@ -51,145 +50,6 @@ body[data-color-theme="midnight"] {
     --black-kite: #21173b;
 }
 
-body[data-theme-tone="dark"] {
-    background: #14121b;
-    color: rgba(245, 245, 245, 0.92);
-    --garnet: rgba(249, 225, 217, 0.85);
-    --amazon-mist: rgba(255, 255, 255, 0.12);
-}
-
-body[data-theme-tone="dark"]::before {
-    mix-blend-mode: screen;
-}
-
-body[data-theme-tone="dark"] .card,
-body[data-theme-tone="dark"] .banner-placement,
-body[data-theme-tone="dark"] .environment-selector,
-body[data-theme-tone="dark"] .status-bar,
-body[data-theme-tone="dark"] .right-sidebar,
-body[data-theme-tone="dark"] .settings-panel,
-body[data-theme-tone="dark"] .inbox-panel,
-body[data-theme-tone="dark"] .content-cards-wrapper,
-body[data-theme-tone="dark"] .banner-height-controls {
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(255, 255, 255, 0.15);
-    box-shadow: none;
-}
-
-body[data-theme-tone="dark"] .card-description,
-body[data-theme-tone="dark"] .status-label,
-body[data-theme-tone="dark"] .settings-hint,
-body[data-theme-tone="dark"] .banner-placeholder,
-body[data-theme-tone="dark"] .inbox-subtitle,
-body[data-theme-tone="dark"] .settings-section-title,
-body[data-theme-tone="dark"] .message,
-body[data-theme-tone="dark"] .debug-entry,
-body[data-theme-tone="dark"] label,
-body[data-theme-tone="dark"] .grain-label {
-    color: rgba(240, 240, 240, 0.78);
-}
-
-body[data-theme-tone="dark"] .status-value,
-body[data-theme-tone="dark"] .card-header h2,
-body[data-theme-tone="dark"] .banner-placement-header h2,
-body[data-theme-tone="dark"] .content-card-item-title {
-    color: rgba(255, 255, 255, 0.92);
-}
-
-body[data-theme-tone="dark"] .btn-secondary,
-body[data-theme-tone="dark"] .icon-button,
-body[data-theme-tone="dark"] .debug-btn,
-body[data-theme-tone="dark"] .clear-log,
-body[data-theme-tone="dark"] .settings-toggle {
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.9);
-    border-color: rgba(255, 255, 255, 0.15);
-}
-
-body[data-theme-tone="dark"] .btn-secondary:hover,
-body[data-theme-tone="dark"] .icon-button:hover,
-body[data-theme-tone="dark"] .debug-btn:hover,
-body[data-theme-tone="dark"] .clear-log:hover,
-body[data-theme-tone="dark"] .settings-toggle:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateY(-1px);
-}
-
-body[data-theme-tone="dark"] .app-version-tag {
-    background: rgba(255, 255, 255, 0.16);
-    color: rgba(255, 255, 255, 0.88);
-}
-
-body[data-theme-tone="dark"] .settings-divider {
-    background: rgba(255, 255, 255, 0.18);
-}
-
-body[data-theme-tone="dark"] .inbox-backdrop {
-    background: rgba(10, 10, 12, 0.65);
-}
-
-body[data-theme-tone="dark"] .inbox-empty-state {
-    border-color: rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.78);
-}
-
-body[data-theme-tone="dark"] input,
-body[data-theme-tone="dark"] select,
-body[data-theme-tone="dark"] textarea {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.9);
-}
-
-body[data-theme-tone="dark"] input::placeholder,
-body[data-theme-tone="dark"] textarea::placeholder {
-    color: rgba(255, 255, 255, 0.55);
-}
-
-body[data-theme-tone="dark"] .content-card-item {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.15);
-}
-
-body[data-theme-tone="dark"] .content-card-item.unread {
-    border-color: rgba(255, 255, 255, 0.25);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-}
-
-body[data-theme-tone="dark"] .content-card-item-body {
-    color: rgba(240, 240, 240, 0.85);
-}
-
-body[data-theme-tone="dark"] .content-card-item-extras {
-    color: rgba(240, 240, 240, 0.7);
-}
-
-body[data-theme-tone="dark"] .content-card-link {
-    background: linear-gradient(45deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.28));
-    color: rgba(255, 255, 255, 0.95);
-}
-
-body[data-theme-tone="dark"] .content-card-link:hover {
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
-}
-
-body[data-theme-tone="dark"] .unread-indicator {
-    background: rgba(255, 255, 255, 0.9);
-}
-
-body[data-theme-tone="dark"] .tab-btn.active {
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.92);
-}
-
-body[data-theme-tone="dark"] .tab-btn:hover:not(.active) {
-    background: rgba(255, 255, 255, 0.08);
-}
-
-body.content-cards-inbox-open {
-    overflow: hidden;
-}
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
@@ -202,18 +62,6 @@ body {
     -moz-osx-font-smoothing: grayscale;
     position: relative;
     overflow-x: hidden;
-}
-
-body::before {
-    content: "";
-    position: fixed;
-    inset: -200px;
-    pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.6'/%3E%3C/svg%3E");
-    mix-blend-mode: overlay;
-    opacity: var(--grain-opacity);
-    z-index: 1;
-    transition: opacity 0.2s ease;
 }
 
 .container {
@@ -1366,30 +1214,6 @@ body::before {
     font-size: 0.8rem;
     color: var(--garnet);
     margin-top: 6px;
-}
-
-.grain-control {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.grain-control label {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: var(--garnet);
-    font-weight: 600;
-}
-
-.grain-control input[type="range"] {
-    width: 100%;
-}
-
-.grain-label {
-    font-size: 0.8rem;
-    color: var(--black-kite);
-    opacity: 0.7;
 }
 
 .setting-item {
