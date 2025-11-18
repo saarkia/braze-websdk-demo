@@ -22,7 +22,7 @@ const defaultSettings = {
     sessionTimeout: 30,
     triggerInterval: 30,
     enableSdkAuth: false,
-    allowUserSuppliedJavascript: false,
+    allowUserSuppliedJavascript: true,
     disablePushTokenMaintenance: false,
     userDisplayName: '',
     colorTheme: DEFAULT_COLOR_THEME
