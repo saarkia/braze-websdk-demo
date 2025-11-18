@@ -12,6 +12,7 @@
     --toxic-orange: #FF6037;
     --garnet: #733635;
     --black-kite: #351E1C;
+    --grain-opacity: 0;
 }
 
 body[data-color-theme="sunrise"] {
@@ -57,6 +58,10 @@ body[data-theme-tone="dark"] {
     --amazon-mist: rgba(255, 255, 255, 0.12);
 }
 
+body[data-theme-tone="dark"]::before {
+    mix-blend-mode: screen;
+}
+
 body[data-theme-tone="dark"] .card,
 body[data-theme-tone="dark"] .banner-placement,
 body[data-theme-tone="dark"] .environment-selector,
@@ -79,7 +84,8 @@ body[data-theme-tone="dark"] .inbox-subtitle,
 body[data-theme-tone="dark"] .settings-section-title,
 body[data-theme-tone="dark"] .message,
 body[data-theme-tone="dark"] .debug-entry,
-body[data-theme-tone="dark"] label {
+body[data-theme-tone="dark"] label,
+body[data-theme-tone="dark"] .grain-label {
     color: rgba(240, 240, 240, 0.78);
 }
 
@@ -194,6 +200,20 @@ body {
     font-weight: 400;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    position: relative;
+    overflow-x: hidden;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: -200px;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.6'/%3E%3C/svg%3E");
+    mix-blend-mode: overlay;
+    opacity: var(--grain-opacity);
+    z-index: 1;
+    transition: opacity 0.2s ease;
 }
 
 .container {
@@ -1346,6 +1366,30 @@ body {
     font-size: 0.8rem;
     color: var(--garnet);
     margin-top: 6px;
+}
+
+.grain-control {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.grain-control label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--garnet);
+    font-weight: 600;
+}
+
+.grain-control input[type="range"] {
+    width: 100%;
+}
+
+.grain-label {
+    font-size: 0.8rem;
+    color: var(--black-kite);
+    opacity: 0.7;
 }
 
 .setting-item {

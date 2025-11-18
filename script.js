@@ -28,7 +28,8 @@ const defaultSettings = {
     disablePushTokenMaintenance: false,
     userDisplayName: '',
     colorTheme: DEFAULT_COLOR_THEME,
-    themeMode: DEFAULT_THEME_MODE
+    themeMode: DEFAULT_THEME_MODE,
+    grainIntensity: 0
 };
 const systemThemeMediaQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
 let contentCardsData = [];
@@ -139,6 +140,7 @@ function applyPersonalizationSettings(settings = defaultSettings) {
     applyUserDisplayName(settings.userDisplayName || '');
     applyColorTheme(settings.colorTheme || DEFAULT_COLOR_THEME);
     applyThemeMode(settings.themeMode || DEFAULT_THEME_MODE);
+    applyGrainIntensity(typeof settings.grainIntensity === 'number' ? settings.grainIntensity : 0);
 }
 
 if (systemThemeMediaQuery && typeof systemThemeMediaQuery.addEventListener === 'function') {
@@ -186,6 +188,27 @@ function resetBannerContainer(message = 'Initialize the SDK with <strong>Allow U
         placeholder.style.display = 'block';
         placeholder.innerHTML = message;
     }
+}
+
+function applyGrainIntensity(rawValue) {
+    const slider = document.getElementById('grainIntensityRange');
+    const label = document.getElementById('grainIntensityLabel');
+    const value = Math.max(0, Math.min(100, Number(rawValue) || 0));
+    const opacity = (value / 100) * 0.35;
+    document.body.style.setProperty('--grain-opacity', opacity.toFixed(3));
+    if (slider) {
+        slider.value = String(value);
+    }
+    if (label) {
+        label.textContent = describeGrainIntensity(value);
+    }
+}
+
+function describeGrainIntensity(value) {
+    if (value <= 0) return 'Off';
+    if (value <= 25) return 'Subtle';
+    if (value <= 60) return 'Balanced';
+    return 'Bold';
 }
 
 function renderBannerPlacement() {
@@ -933,6 +956,15 @@ function setupStatePersistence() {
     if (themeModeSelect) {
         themeModeSelect.addEventListener('change', () => {
             applyThemeMode(themeModeSelect.value);
+            saveSettings();
+        });
+    }
+
+    const grainIntensityRange = document.getElementById('grainIntensityRange');
+    if (grainIntensityRange) {
+        grainIntensityRange.addEventListener('input', () => {
+            const value = Math.max(0, Math.min(100, Number(grainIntensityRange.value) || 0));
+            applyGrainIntensity(value);
             saveSettings();
         });
     }
@@ -1697,7 +1729,8 @@ function saveSettings() {
         disablePushTokenMaintenance: document.getElementById('disablePushTokenMaintenance').checked,
         userDisplayName: (document.getElementById('displayNameInput')?.value || '').trim(),
         colorTheme: document.getElementById('colorThemeSelect')?.value || DEFAULT_COLOR_THEME,
-        themeMode: document.getElementById('themeModeSelect')?.value || DEFAULT_THEME_MODE
+        themeMode: document.getElementById('themeModeSelect')?.value || DEFAULT_THEME_MODE,
+        grainIntensity: parseInt(document.getElementById('grainIntensityRange')?.value, 10) || 0
     };
     
     localStorage.setItem('braze-demo-settings', JSON.stringify(settings));
@@ -1734,6 +1767,10 @@ function loadSettings() {
     const themeModeSelect = document.getElementById('themeModeSelect');
     if (themeModeSelect) {
         themeModeSelect.value = VALID_THEME_MODES.has(settings.themeMode) ? settings.themeMode : DEFAULT_THEME_MODE;
+    }
+    const grainRange = document.getElementById('grainIntensityRange');
+    if (grainRange) {
+        grainRange.value = String(Math.max(0, Math.min(100, settings.grainIntensity ?? 0)));
     }
     
     applyPersonalizationSettings(settings);
