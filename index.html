@@ -62,7 +62,7 @@
         <header class="header">
             <div class="logo">
                 <i class="fas fa-rocket"></i>
-                <h1>Braze WebSDK Demo</h1>
+                <h1 id="appTitle">Braze WebSDK Demo</h1>
             </div>
             <div class="header-actions">
                 <button class="icon-button" id="openContentCardsButton" title="Message Inbox">
@@ -417,6 +417,35 @@
                         Removes persisted API keys, user IDs, and environment selections from this browser.
                     </p>
                 </div>
+                <div class="settings-divider"></div>
+                <div class="setting-item">
+                    <h4 class="settings-section-title">
+                        <i class="fas fa-palette"></i>
+                        Personalisation
+                    </h4>
+                </div>
+                <div class="input-group">
+                    <label for="displayNameInput">Display Name</label>
+                    <input type="text" id="displayNameInput" maxlength="40" placeholder="e.g., Aria">
+                </div>
+                <div class="input-group">
+                    <label for="colorThemeSelect">Colour Palette</label>
+                    <select id="colorThemeSelect">
+                        <option value="sunrise">Sunrise Ember</option>
+                        <option value="lakeside">Lakeside Breeze</option>
+                        <option value="evergreen">Evergreen Canopy</option>
+                        <option value="midnight">Midnight Orchid</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="themeModeSelect">Theme Mode</label>
+                    <select id="themeModeSelect">
+                        <option value="auto">Auto (follow system)</option>
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                    </select>
+                </div>
+                <p class="settings-hint">Personal changes are stored locally and apply immediately.</p>
             </div>
         </div>
     </div>

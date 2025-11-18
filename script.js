@@ -15,11 +15,30 @@ const BANNER_HEIGHT_STORAGE_KEY = 'braze-banner-height';
 const BANNER_HEIGHT_MIN = 120;
 const BANNER_HEIGHT_MAX = 800;
 const APP_VERSION = '2025.02.07.1';
+const DEFAULT_COLOR_THEME = 'sunrise';
+const DEFAULT_THEME_MODE = 'auto';
+const VALID_COLOR_THEMES = new Set(['sunrise', 'lakeside', 'evergreen', 'midnight']);
+const VALID_THEME_MODES = new Set(['auto', 'light', 'dark']);
+const defaultSettings = {
+    enableLogging: true,
+    sessionTimeout: 30,
+    triggerInterval: 30,
+    enableSdkAuth: false,
+    allowUserSuppliedJavascript: false,
+    disablePushTokenMaintenance: false,
+    userDisplayName: '',
+    colorTheme: DEFAULT_COLOR_THEME,
+    themeMode: DEFAULT_THEME_MODE
+};
+const systemThemeMediaQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
 let contentCardsData = [];
 let contentCardsMap = new Map();
 let contentCardsSubscriptionId = null;
 let contentCardsObserver = null;
 let contentCardsImpressionsLogged = new Set();
+
+applyColorTheme(DEFAULT_COLOR_THEME);
+applyThemeMode(DEFAULT_THEME_MODE);
 
 function updateBannerStatus(message, variant = '') {
     const statusElement = document.getElementById('bannerPlacementStatus');
@@ -78,6 +97,62 @@ function applyBannerHeightStyles(height) {
 
     container.style.minHeight = `${sanitized}px`;
     container.style.height = `${sanitized}px`;
+}
+
+function applyUserDisplayName(rawName = '') {
+    const trimmed = typeof rawName === 'string' ? rawName.trim() : '';
+    const titleElement = document.getElementById('appTitle');
+    const inboxTitle = document.getElementById('contentCardsTitle');
+    const suffix = trimmed && /s$/i.test(trimmed) ? '\'' : '\'s';
+    const displayTitle = trimmed ? `${trimmed}${suffix} Braze WebSDK Demo` : 'Braze WebSDK Demo';
+    if (titleElement) {
+        titleElement.textContent = displayTitle;
+    }
+    document.title = displayTitle;
+    if (inboxTitle) {
+        inboxTitle.textContent = trimmed ? `${trimmed}${suffix} Message Inbox` : 'Message Inbox';
+    }
+}
+
+function applyColorTheme(theme) {
+    const selectedTheme = VALID_COLOR_THEMES.has(theme) ? theme : DEFAULT_COLOR_THEME;
+    document.body.dataset.colorTheme = selectedTheme;
+}
+
+function updateThemeToneFromMode() {
+    const currentMode = document.body.dataset.themeMode || DEFAULT_THEME_MODE;
+    if (currentMode === 'auto') {
+        const prefersDark = systemThemeMediaQuery ? systemThemeMediaQuery.matches : false;
+        document.body.dataset.themeTone = prefersDark ? 'dark' : 'light';
+    } else {
+        document.body.dataset.themeTone = currentMode;
+    }
+}
+
+function applyThemeMode(mode) {
+    const selectedMode = VALID_THEME_MODES.has(mode) ? mode : DEFAULT_THEME_MODE;
+    document.body.dataset.themeMode = selectedMode;
+    updateThemeToneFromMode();
+}
+
+function applyPersonalizationSettings(settings = defaultSettings) {
+    applyUserDisplayName(settings.userDisplayName || '');
+    applyColorTheme(settings.colorTheme || DEFAULT_COLOR_THEME);
+    applyThemeMode(settings.themeMode || DEFAULT_THEME_MODE);
+}
+
+if (systemThemeMediaQuery && typeof systemThemeMediaQuery.addEventListener === 'function') {
+    systemThemeMediaQuery.addEventListener('change', () => {
+        if ((document.body.dataset.themeMode || DEFAULT_THEME_MODE) === 'auto') {
+            updateThemeToneFromMode();
+        }
+    });
+} else if (systemThemeMediaQuery && typeof systemThemeMediaQuery.addListener === 'function') {
+    systemThemeMediaQuery.addListener(() => {
+        if ((document.body.dataset.themeMode || DEFAULT_THEME_MODE) === 'auto') {
+            updateThemeToneFromMode();
+        }
+    });
 }
 
 function clearBannerHeightStyles() {
@@ -837,6 +912,30 @@ function setupStatePersistence() {
             clearAppState({ resetFields: true });
         });
     }
+
+    const displayNameInput = document.getElementById('displayNameInput');
+    if (displayNameInput) {
+        displayNameInput.addEventListener('input', () => {
+            applyUserDisplayName(displayNameInput.value);
+            saveSettings();
+        });
+    }
+
+    const colorThemeSelect = document.getElementById('colorThemeSelect');
+    if (colorThemeSelect) {
+        colorThemeSelect.addEventListener('change', () => {
+            applyColorTheme(colorThemeSelect.value);
+            saveSettings();
+        });
+    }
+
+    const themeModeSelect = document.getElementById('themeModeSelect');
+    if (themeModeSelect) {
+        themeModeSelect.addEventListener('change', () => {
+            applyThemeMode(themeModeSelect.value);
+            saveSettings();
+        });
+    }
 }
 
 function setupBannerHeightControls() {
@@ -1591,32 +1690,54 @@ document.addEventListener('keydown', function(e) {
 function saveSettings() {
     const settings = {
         enableLogging: document.getElementById('enableLogging').checked,
-        sessionTimeout: document.getElementById('sessionTimeout').value,
-        triggerInterval: document.getElementById('triggerInterval').value,
+        sessionTimeout: parseInt(document.getElementById('sessionTimeout').value, 10) || defaultSettings.sessionTimeout,
+        triggerInterval: parseInt(document.getElementById('triggerInterval').value, 10) || defaultSettings.triggerInterval,
         enableSdkAuth: document.getElementById('enableSdkAuth').checked,
         allowUserSuppliedJavascript: document.getElementById('allowUserSuppliedJavascript').checked,
-        disablePushTokenMaintenance: document.getElementById('disablePushTokenMaintenance').checked
+        disablePushTokenMaintenance: document.getElementById('disablePushTokenMaintenance').checked,
+        userDisplayName: (document.getElementById('displayNameInput')?.value || '').trim(),
+        colorTheme: document.getElementById('colorThemeSelect')?.value || DEFAULT_COLOR_THEME,
+        themeMode: document.getElementById('themeModeSelect')?.value || DEFAULT_THEME_MODE
     };
     
     localStorage.setItem('braze-demo-settings', JSON.stringify(settings));
+    applyPersonalizationSettings(settings);
 }
 
 function loadSettings() {
     const savedSettings = localStorage.getItem('braze-demo-settings');
+    const settings = { ...defaultSettings };
     if (savedSettings) {
         try {
-            const settings = JSON.parse(savedSettings);
-            
-            document.getElementById('enableLogging').checked = settings.enableLogging ?? true;
-            document.getElementById('sessionTimeout').value = settings.sessionTimeout ?? 30;
-            document.getElementById('triggerInterval').value = settings.triggerInterval ?? 30;
-            document.getElementById('enableSdkAuth').checked = settings.enableSdkAuth ?? false;
-            document.getElementById('allowUserSuppliedJavascript').checked = settings.allowUserSuppliedJavascript ?? false;
-            document.getElementById('disablePushTokenMaintenance').checked = settings.disablePushTokenMaintenance ?? false;
+            const parsed = JSON.parse(savedSettings);
+            Object.assign(settings, parsed);
         } catch (error) {
             console.warn('Failed to load saved settings:', error);
         }
     }
+    
+    document.getElementById('enableLogging').checked = settings.enableLogging;
+    document.getElementById('sessionTimeout').value = settings.sessionTimeout;
+    document.getElementById('triggerInterval').value = settings.triggerInterval;
+    document.getElementById('enableSdkAuth').checked = settings.enableSdkAuth;
+    document.getElementById('allowUserSuppliedJavascript').checked = settings.allowUserSuppliedJavascript;
+    document.getElementById('disablePushTokenMaintenance').checked = settings.disablePushTokenMaintenance;
+    
+    const displayNameInput = document.getElementById('displayNameInput');
+    if (displayNameInput) {
+        displayNameInput.value = settings.userDisplayName || '';
+    }
+    const colorThemeSelect = document.getElementById('colorThemeSelect');
+    if (colorThemeSelect) {
+        colorThemeSelect.value = VALID_COLOR_THEMES.has(settings.colorTheme) ? settings.colorTheme : DEFAULT_COLOR_THEME;
+    }
+    const themeModeSelect = document.getElementById('themeModeSelect');
+    if (themeModeSelect) {
+        themeModeSelect.value = VALID_THEME_MODES.has(settings.themeMode) ? settings.themeMode : DEFAULT_THEME_MODE;
+    }
+    
+    applyPersonalizationSettings(settings);
+    return settings;
 }
 
 // Load settings and environments on page load

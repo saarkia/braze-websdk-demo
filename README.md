@@ -32,6 +32,11 @@ A comprehensive, clean, and futuristic web application for demonstrating Braze W
 - **Control Handling**: Automatically hides when the user is in a control variant
 - **Status Indicators**: Real-time status pill and activity log entries for banner lifecycle events
 
+### 🎨 Personalisation
+- **Custom Display Name**: Brand the experience with your name in the header and inbox
+- **Colour Palettes**: Choose from four handcrafted themes that update live
+- **Light/Dark/Auto**: Respect system preferences or override with a click
+
 ### 🔔 Push Notifications
 - **Permission Management**: Request and manage browser push permissions
 - **Registration Flow**: Complete push notification registration process
@@ -80,6 +85,9 @@ npx serve .
 - **SDK Authentication**: Enable SDK authentication
 - **User Supplied JavaScript**: Allow custom JavaScript in messages (required for Banners)
 - **Push Token Maintenance**: Manage push token lifecycle
+- **Display Name**: Set a friendly name for the demo header and inbox
+- **Colour Palette**: Instantly swap between curated colour presets
+- **Theme Mode**: Toggle light, dark, or auto (follows system preference)
 
 ## Usage Examples
 
@@ -108,6 +116,11 @@ npx serve .
 3. The `bannerdemo` placement renders automatically at the top of the page
 4. Use **Refresh Banner** to manually request updated banner content
 5. Review banner status changes within the banner header and Activity Log
+
+### Tweaking Personalisation
+1. Open the **Settings** panel (cog icon in the header)
+2. Update your **Display Name**, **Colour Palette**, or **Theme Mode**
+3. Changes apply instantly and persist locally until you reset them
 
 ## Browser Compatibility
 
