@@ -12,13 +12,13 @@
     <!-- Stylesheets -->
     <link rel="stylesheet" href="styles.css">
     <link rel="manifest" href="manifest.json">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
         <!-- Banner Placement -->
-        <section class="banner-placement" id="bannerPlacementSection">
+        <section class="banner-placement" id="bannerPlacementSection" data-figure-label="FIG 1.0 — Banner System">
             <div class="banner-placement-header">
                 <div class="banner-label">
                     <i class="fas fa-flag"></i>
@@ -105,7 +105,7 @@
         </div>
 
         <!-- Environment Selector -->
-        <div class="environment-selector">
+        <div class="environment-selector" data-figure-label="FIG 1.1 — Environment Control">
             <div class="env-selector-group">
                 <label for="environmentSelect">
                     <i class="fas fa-server"></i>
@@ -128,7 +128,7 @@
         </div>
 
         <!-- Status Bar -->
-        <div class="status-bar" id="statusBar">
+        <div class="status-bar" id="statusBar" data-figure-label="FIG 1.2 — Status Readout">
             <div class="status-item">
                 <span class="status-label">SDK Status:</span>
                 <span class="status-value" id="sdkStatus">Not Initialized</span>
@@ -312,7 +312,7 @@
             </main>
 
             <!-- Right Sidebar with Tabs -->
-            <aside class="right-sidebar">
+            <aside class="right-sidebar" data-figure-label="FIG 2.0 — Diagnostics Console">
                 <div class="sidebar-tabs">
                     <button class="sidebar-tab active" onclick="switchSidebarTab('activity')">
                         <i class="fas fa-list"></i>
@@ -368,7 +368,7 @@
         </div>
 
         <!-- Settings Panel -->
-        <div class="settings-panel" id="settingsPanel">
+        <div class="settings-panel" id="settingsPanel" data-figure-label="FIG 3.0 — SDK Settings">
             <div class="settings-header">
                 <h3>Advanced SDK Settings</h3>
                 <button class="close-settings" onclick="toggleSettings()">
@@ -436,6 +436,15 @@
                         <option value="evergreen">Evergreen Canopy</option>
                         <option value="midnight">Midnight Orchid</option>
                     </select>
+                </div>
+                <div class="setting-item">
+                    <label class="toggle-label" for="technicalZineModeToggle">
+                        <input type="checkbox" id="technicalZineModeToggle">
+                        Enable Technical Zine Mode
+                    </label>
+                    <p class="card-description">
+                        Switch to a blueprint-inspired layout with duotone colours, mono captions, and figure markers.
+                    </p>
                 </div>
                 <p class="settings-hint">Personal changes are stored locally and apply immediately.</p>
             </div>

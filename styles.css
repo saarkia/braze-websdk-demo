@@ -1228,6 +1228,22 @@ body {
     font-size: 0.9rem;
 }
 
+.toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--garnet);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-bottom: 8px;
+}
+
+.toggle-label input[type="checkbox"] {
+    margin: 0;
+    accent-color: var(--toxic-orange);
+}
+
 .setting-item input[type="checkbox"] {
     margin-right: 10px;
     accent-color: var(--toxic-orange);
@@ -1389,6 +1405,270 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
     background: var(--garnet);
+}
+
+/* Technical Zine Theme ---------------------------------------------------- */
+body.technical-zine-theme {
+    --technical-ink: #304ffe;
+    --technical-ink-soft: rgba(48, 79, 254, 0.45);
+    --technical-ink-faint: rgba(48, 79, 254, 0.18);
+    --morning-snow: #ffffff;
+    --amazon-mist: rgba(48, 79, 254, 0.18);
+    --aqua-mist: rgba(48, 79, 254, 0.32);
+    --toxic-orange: #304ffe;
+    --garnet: rgba(24, 35, 110, 0.85);
+    --black-kite: #0f1c5a;
+    background: var(--morning-snow);
+    color: var(--technical-ink);
+    font-family: 'Cormorant Garamond', serif;
+}
+
+body.technical-zine-theme ::selection {
+    background: var(--technical-ink);
+    color: #ffffff;
+}
+
+body.technical-zine-theme .container {
+    max-width: 640px;
+    padding: 72px 42px 110px;
+    border: 1px solid var(--technical-ink-soft);
+    box-shadow: 22px 22px 0 rgba(48, 79, 254, 0.12);
+    background:
+        repeating-linear-gradient(0deg, rgba(48, 79, 254, 0.05) 0, rgba(48, 79, 254, 0.05) 1px, transparent 1px, transparent 28px),
+        repeating-linear-gradient(90deg, rgba(48, 79, 254, 0.04) 0, rgba(48, 79, 254, 0.04) 1px, transparent 1px, transparent 28px),
+        #ffffff;
+    position: relative;
+}
+
+body.technical-zine-theme .container::after {
+    content: '+';
+    position: absolute;
+    top: 28px;
+    right: 28px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--technical-ink-soft);
+}
+
+body.technical-zine-theme [data-figure-label] {
+    position: relative;
+}
+
+body.technical-zine-theme [data-figure-label]::before {
+    content: attr(data-figure-label);
+    position: absolute;
+    top: -32px;
+    left: 0;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--technical-ink-soft);
+}
+
+body.technical-zine-theme .header {
+    padding-bottom: 32px;
+    border-bottom: 1px dotted var(--technical-ink-soft);
+}
+
+body.technical-zine-theme .logo {
+    gap: 12px;
+    align-items: flex-end;
+}
+
+body.technical-zine-theme #appTitle {
+    font-family: 'Space Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: -0.06em;
+    transform: scaleY(1.14);
+    margin: 0;
+}
+
+body.technical-zine-theme .header-actions button,
+body.technical-zine-theme .header-actions span {
+    font-family: 'Space Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.8rem;
+}
+
+body.technical-zine-theme .banner-placement,
+body.technical-zine-theme .environment-selector,
+body.technical-zine-theme .card,
+body.technical-zine-theme .status-bar,
+body.technical-zine-theme .right-sidebar,
+body.technical-zine-theme .settings-panel,
+body.technical-zine-theme .inbox-panel,
+body.technical-zine-theme .content-cards-wrapper {
+    background: transparent;
+    border: 1px solid var(--technical-ink-soft);
+    box-shadow: 6px 6px 0 rgba(48, 79, 254, 0.18);
+    border-radius: 6px;
+}
+
+body.technical-zine-theme .banner-placement-header,
+body.technical-zine-theme .card-header,
+body.technical-zine-theme .settings-header,
+body.technical-zine-theme .inbox-panel-header {
+    border-bottom: 1px dotted var(--technical-ink-soft);
+    padding-bottom: 20px;
+    margin-bottom: 24px;
+}
+
+body.technical-zine-theme .banner-placement-header h2,
+body.technical-zine-theme .card-header h2,
+body.technical-zine-theme .settings-header h3,
+body.technical-zine-theme .inbox-panel-header h3 {
+    font-family: 'Space Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 1rem;
+}
+
+body.technical-zine-theme .banner-subtitle,
+body.technical-zine-theme .card-description,
+body.technical-zine-theme .settings-hint,
+body.technical-zine-theme .inbox-subtitle,
+body.technical-zine-theme p,
+body.technical-zine-theme li {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.05rem;
+    letter-spacing: 0.01em;
+}
+
+body.technical-zine-theme .card-description {
+    font-style: italic;
+}
+
+body.technical-zine-theme label,
+body.technical-zine-theme .status-label,
+body.technical-zine-theme .status-value,
+body.technical-zine-theme .btn-secondary,
+body.technical-zine-theme .btn-env,
+body.technical-zine-theme .icon-button,
+body.technical-zine-theme .settings-toggle,
+body.technical-zine-theme .tab-btn,
+body.technical-zine-theme .debug-btn,
+body.technical-zine-theme .clear-log,
+body.technical-zine-theme .banner-status,
+body.technical-zine-theme .app-version-tag,
+body.technical-zine-theme .inbox-empty-state,
+body.technical-zine-theme .unread-indicator,
+body.technical-zine-theme .environment-selector label {
+    font-family: 'Space Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+}
+
+body.technical-zine-theme input,
+body.technical-zine-theme select,
+body.technical-zine-theme textarea {
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.08em;
+    background: #f8f9ff;
+    border: 1px solid var(--technical-ink-soft);
+    border-radius: 0;
+    color: var(--technical-ink);
+}
+
+body.technical-zine-theme input:focus,
+body.technical-zine-theme select:focus,
+body.technical-zine-theme textarea:focus {
+    outline: none;
+    border-color: var(--technical-ink);
+    box-shadow: 4px 4px 0 rgba(48, 79, 254, 0.35);
+}
+
+body.technical-zine-theme .btn-secondary,
+body.technical-zine-theme .icon-button,
+body.technical-zine-theme .settings-toggle,
+body.technical-zine-theme .btn-env,
+body.technical-zine-theme .tab-btn,
+body.technical-zine-theme .debug-btn,
+body.technical-zine-theme .clear-log {
+    background: transparent;
+    border-radius: 0;
+    border: 1px solid var(--technical-ink-soft);
+    color: var(--technical-ink);
+    transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+body.technical-zine-theme .btn-secondary:hover,
+body.technical-zine-theme .icon-button:hover,
+body.technical-zine-theme .settings-toggle:hover,
+body.technical-zine-theme .btn-env:hover,
+body.technical-zine-theme .tab-btn:hover,
+body.technical-zine-theme .debug-btn:hover,
+body.technical-zine-theme .clear-log:hover {
+    background: var(--technical-ink);
+    color: #ffffff;
+    box-shadow: 4px 4px 0 rgba(48, 79, 254, 0.35);
+}
+
+body.technical-zine-theme .btn-secondary:active,
+body.technical-zine-theme .icon-button:active,
+body.technical-zine-theme .settings-toggle:active,
+body.technical-zine-theme .btn-env:active,
+body.technical-zine-theme .tab-btn:active,
+body.technical-zine-theme .debug-btn:active,
+body.technical-zine-theme .clear-log:active {
+    transform: translateY(2px);
+    box-shadow: none;
+}
+
+body.technical-zine-theme .settings-divider {
+    border-top: 1px dotted var(--technical-ink-soft);
+    margin: 34px 0;
+    position: relative;
+}
+
+body.technical-zine-theme .settings-divider::after {
+    content: '+';
+    position: absolute;
+    top: -11px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--technical-ink-soft);
+    background: var(--morning-snow);
+    padding: 0 6px;
+}
+
+body.technical-zine-theme .banner-height-controls {
+    border-top: 1px dotted var(--technical-ink-soft);
+}
+
+body.technical-zine-theme .status-chip {
+    border-radius: 0;
+    border: 1px solid var(--technical-ink);
+    background: transparent;
+    color: var(--technical-ink);
+}
+
+body.technical-zine-theme .status-chip.success {
+    background: rgba(48, 79, 254, 0.12);
+}
+
+body.technical-zine-theme .content-card-item {
+    border: 1px solid var(--technical-ink-soft);
+    background: rgba(48, 79, 254, 0.04);
+}
+
+body.technical-zine-theme .content-card-item.unread {
+    box-shadow: 6px 6px 0 rgba(48, 79, 254, 0.28);
+}
+
+body.technical-zine-theme code,
+body.technical-zine-theme pre {
+    font-family: 'Space Mono', monospace;
+    background: rgba(48, 79, 254, 0.08);
+    border: 1px solid var(--technical-ink-soft);
+    border-radius: 0;
+}
+
+body.technical-zine-theme .settings-panel {
+    max-width: 540px;
 }
 
 /* Responsive Design */

@@ -25,7 +25,8 @@ const defaultSettings = {
     allowUserSuppliedJavascript: true,
     disablePushTokenMaintenance: false,
     userDisplayName: '',
-    colorTheme: DEFAULT_COLOR_THEME
+    colorTheme: DEFAULT_COLOR_THEME,
+    technicalZineMode: false
 };
 let contentCardsData = [];
 let contentCardsMap = new Map();
@@ -117,7 +118,12 @@ function applyColorTheme(theme) {
 function applyPersonalizationSettings(settings = defaultSettings) {
     applyUserDisplayName(settings.userDisplayName || '');
     applyColorTheme(settings.colorTheme || DEFAULT_COLOR_THEME);
+    applyTechnicalZineTheme(Boolean(settings.technicalZineMode));
 }
+function applyTechnicalZineTheme(enabled) {
+    document.body.classList.toggle('technical-zine-theme', Boolean(enabled));
+}
+
 
 function clearBannerHeightStyles() {
     const container = document.getElementById('bannerPlacementContainer');
@@ -893,6 +899,14 @@ function setupStatePersistence() {
         });
     }
 
+    const technicalZineToggle = document.getElementById('technicalZineModeToggle');
+    if (technicalZineToggle) {
+        technicalZineToggle.addEventListener('change', () => {
+            applyTechnicalZineTheme(technicalZineToggle.checked);
+            saveSettings();
+        });
+    }
+
 }
 
 function setupBannerHeightControls() {
@@ -1653,7 +1667,8 @@ function saveSettings() {
         allowUserSuppliedJavascript: document.getElementById('allowUserSuppliedJavascript').checked,
         disablePushTokenMaintenance: document.getElementById('disablePushTokenMaintenance').checked,
         userDisplayName: (document.getElementById('displayNameInput')?.value || '').trim(),
-        colorTheme: document.getElementById('colorThemeSelect')?.value || DEFAULT_COLOR_THEME
+        colorTheme: document.getElementById('colorThemeSelect')?.value || DEFAULT_COLOR_THEME,
+        technicalZineMode: document.getElementById('technicalZineModeToggle')?.checked ?? false
     };
     
     localStorage.setItem('braze-demo-settings', JSON.stringify(settings));
@@ -1686,6 +1701,10 @@ function loadSettings() {
     const colorThemeSelect = document.getElementById('colorThemeSelect');
     if (colorThemeSelect) {
         colorThemeSelect.value = VALID_COLOR_THEMES.has(settings.colorTheme) ? settings.colorTheme : DEFAULT_COLOR_THEME;
+    }
+    const technicalZineToggle = document.getElementById('technicalZineModeToggle');
+    if (technicalZineToggle) {
+        technicalZineToggle.checked = Boolean(settings.technicalZineMode);
     }
     applyPersonalizationSettings(settings);
     return settings;

@@ -35,6 +35,7 @@ A comprehensive, clean, and futuristic web application for demonstrating Braze W
 ### 🎨 Personalisation
 - **Custom Display Name**: Brand the experience with your name in the header and inbox
 - **Colour Palettes**: Choose from four handcrafted themes that update live
+- **Technical Zine Mode**: Flip the blueprint-style aesthetic for workshop demos
 
 ### 🔔 Push Notifications
 - **Permission Management**: Request and manage browser push permissions
@@ -117,7 +118,7 @@ npx serve .
 
 ### Tweaking Personalisation
 1. Open the **Settings** panel (cog icon in the header)
-2. Update your **Display Name** or **Colour Palette**
+2. Update your **Display Name**, **Colour Palette**, or toggle **Technical Zine Mode**
 3. Changes apply instantly and persist locally until you reset them
 
 ## Browser Compatibility
