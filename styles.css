@@ -1407,8 +1407,8 @@ body {
     background: var(--garnet);
 }
 
-/* Technical Zine Theme ---------------------------------------------------- */
-body.technical-zine-theme {
+/* Minimal Mode (Blueprint) ------------------------------------------------ */
+body.minimal-theme {
     --technical-ink: #304ffe;
     --technical-ink-soft: rgba(48, 79, 254, 0.45);
     --technical-ink-faint: rgba(48, 79, 254, 0.18);
@@ -1423,16 +1423,17 @@ body.technical-zine-theme {
     font-family: 'Cormorant Garamond', serif;
 }
 
-body.technical-zine-theme ::selection {
+body.minimal-theme ::selection {
     background: var(--technical-ink);
     color: #ffffff;
 }
 
-body.technical-zine-theme .container {
-    max-width: 640px;
-    padding: 72px 42px 110px;
+body.minimal-theme .container {
+    max-width: 1200px;
+    padding: 60px 40px 100px;
+    margin: 0 auto;
     border: 1px solid var(--technical-ink-soft);
-    box-shadow: 22px 22px 0 rgba(48, 79, 254, 0.12);
+    box-shadow: 20px 20px 0 rgba(48, 79, 254, 0.12);
     background:
         repeating-linear-gradient(0deg, rgba(48, 79, 254, 0.05) 0, rgba(48, 79, 254, 0.05) 1px, transparent 1px, transparent 28px),
         repeating-linear-gradient(90deg, rgba(48, 79, 254, 0.04) 0, rgba(48, 79, 254, 0.04) 1px, transparent 1px, transparent 28px),
@@ -1440,7 +1441,7 @@ body.technical-zine-theme .container {
     position: relative;
 }
 
-body.technical-zine-theme .container::after {
+body.minimal-theme .container::after {
     content: '+';
     position: absolute;
     top: 28px;
@@ -1450,11 +1451,11 @@ body.technical-zine-theme .container::after {
     color: var(--technical-ink-soft);
 }
 
-body.technical-zine-theme [data-figure-label] {
+body.minimal-theme [data-figure-label] {
     position: relative;
 }
 
-body.technical-zine-theme [data-figure-label]::before {
+body.minimal-theme [data-figure-label]::before {
     content: attr(data-figure-label);
     position: absolute;
     top: -32px;
@@ -1471,12 +1472,12 @@ body.technical-zine-theme .header {
     border-bottom: 1px dotted var(--technical-ink-soft);
 }
 
-body.technical-zine-theme .logo {
+body.minimal-theme .logo {
     gap: 12px;
     align-items: flex-end;
 }
 
-body.technical-zine-theme #appTitle {
+body.minimal-theme #appTitle {
     font-family: 'Space Mono', monospace;
     text-transform: uppercase;
     letter-spacing: -0.06em;
@@ -1484,85 +1485,85 @@ body.technical-zine-theme #appTitle {
     margin: 0;
 }
 
-body.technical-zine-theme .header-actions button,
-body.technical-zine-theme .header-actions span {
+body.minimal-theme .header-actions button,
+body.minimal-theme .header-actions span {
     font-family: 'Space Mono', monospace;
     text-transform: uppercase;
     letter-spacing: 0.18em;
     font-size: 0.8rem;
 }
 
-body.technical-zine-theme .banner-placement,
-body.technical-zine-theme .environment-selector,
-body.technical-zine-theme .card,
-body.technical-zine-theme .status-bar,
-body.technical-zine-theme .right-sidebar,
-body.technical-zine-theme .settings-panel,
-body.technical-zine-theme .inbox-panel,
-body.technical-zine-theme .content-cards-wrapper {
+body.minimal-theme .banner-placement,
+body.minimal-theme .environment-selector,
+body.minimal-theme .card,
+body.minimal-theme .status-bar,
+body.minimal-theme .right-sidebar,
+body.minimal-theme .settings-panel,
+body.minimal-theme .inbox-panel,
+body.minimal-theme .content-cards-wrapper {
     background: transparent;
     border: 1px solid var(--technical-ink-soft);
     box-shadow: 6px 6px 0 rgba(48, 79, 254, 0.18);
     border-radius: 6px;
 }
 
-body.technical-zine-theme .banner-placement-header,
-body.technical-zine-theme .card-header,
-body.technical-zine-theme .settings-header,
-body.technical-zine-theme .inbox-panel-header {
+body.minimal-theme .banner-placement-header,
+body.minimal-theme .card-header,
+body.minimal-theme .settings-header,
+body.minimal-theme .inbox-panel-header {
     border-bottom: 1px dotted var(--technical-ink-soft);
     padding-bottom: 20px;
     margin-bottom: 24px;
 }
 
-body.technical-zine-theme .banner-placement-header h2,
-body.technical-zine-theme .card-header h2,
-body.technical-zine-theme .settings-header h3,
-body.technical-zine-theme .inbox-panel-header h3 {
+body.minimal-theme .banner-placement-header h2,
+body.minimal-theme .card-header h2,
+body.minimal-theme .settings-header h3,
+body.minimal-theme .inbox-panel-header h3 {
     font-family: 'Space Mono', monospace;
     text-transform: uppercase;
     letter-spacing: 0.12em;
     font-size: 1rem;
 }
 
-body.technical-zine-theme .banner-subtitle,
-body.technical-zine-theme .card-description,
-body.technical-zine-theme .settings-hint,
-body.technical-zine-theme .inbox-subtitle,
-body.technical-zine-theme p,
-body.technical-zine-theme li {
+body.minimal-theme .banner-subtitle,
+body.minimal-theme .card-description,
+body.minimal-theme .settings-hint,
+body.minimal-theme .inbox-subtitle,
+body.minimal-theme p,
+body.minimal-theme li {
     font-family: 'Cormorant Garamond', serif;
     font-size: 1.05rem;
     letter-spacing: 0.01em;
 }
 
-body.technical-zine-theme .card-description {
+body.minimal-theme .card-description {
     font-style: italic;
 }
 
-body.technical-zine-theme label,
-body.technical-zine-theme .status-label,
-body.technical-zine-theme .status-value,
-body.technical-zine-theme .btn-secondary,
-body.technical-zine-theme .btn-env,
-body.technical-zine-theme .icon-button,
-body.technical-zine-theme .settings-toggle,
-body.technical-zine-theme .tab-btn,
-body.technical-zine-theme .debug-btn,
-body.technical-zine-theme .clear-log,
-body.technical-zine-theme .banner-status,
-body.technical-zine-theme .app-version-tag,
-body.technical-zine-theme .inbox-empty-state,
-body.technical-zine-theme .unread-indicator,
-body.technical-zine-theme .environment-selector label {
+body.minimal-theme label,
+body.minimal-theme .status-label,
+body.minimal-theme .status-value,
+body.minimal-theme .btn-secondary,
+body.minimal-theme .btn-env,
+body.minimal-theme .icon-button,
+body.minimal-theme .settings-toggle,
+body.minimal-theme .tab-btn,
+body.minimal-theme .debug-btn,
+body.minimal-theme .clear-log,
+body.minimal-theme .banner-status,
+body.minimal-theme .app-version-tag,
+body.minimal-theme .inbox-empty-state,
+body.minimal-theme .unread-indicator,
+body.minimal-theme .environment-selector label {
     font-family: 'Space Mono', monospace;
     text-transform: uppercase;
     letter-spacing: 0.16em;
 }
 
-body.technical-zine-theme input,
-body.technical-zine-theme select,
-body.technical-zine-theme textarea {
+body.minimal-theme input,
+body.minimal-theme select,
+body.minimal-theme textarea {
     font-family: 'Space Mono', monospace;
     letter-spacing: 0.08em;
     background: #f8f9ff;
@@ -1571,21 +1572,21 @@ body.technical-zine-theme textarea {
     color: var(--technical-ink);
 }
 
-body.technical-zine-theme input:focus,
-body.technical-zine-theme select:focus,
-body.technical-zine-theme textarea:focus {
+body.minimal-theme input:focus,
+body.minimal-theme select:focus,
+body.minimal-theme textarea:focus {
     outline: none;
     border-color: var(--technical-ink);
     box-shadow: 4px 4px 0 rgba(48, 79, 254, 0.35);
 }
 
-body.technical-zine-theme .btn-secondary,
-body.technical-zine-theme .icon-button,
-body.technical-zine-theme .settings-toggle,
-body.technical-zine-theme .btn-env,
-body.technical-zine-theme .tab-btn,
-body.technical-zine-theme .debug-btn,
-body.technical-zine-theme .clear-log {
+body.minimal-theme .btn-secondary,
+body.minimal-theme .icon-button,
+body.minimal-theme .settings-toggle,
+body.minimal-theme .btn-env,
+body.minimal-theme .tab-btn,
+body.minimal-theme .debug-btn,
+body.minimal-theme .clear-log {
     background: transparent;
     border-radius: 0;
     border: 1px solid var(--technical-ink-soft);
@@ -1593,36 +1594,36 @@ body.technical-zine-theme .clear-log {
     transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
 }
 
-body.technical-zine-theme .btn-secondary:hover,
-body.technical-zine-theme .icon-button:hover,
-body.technical-zine-theme .settings-toggle:hover,
-body.technical-zine-theme .btn-env:hover,
-body.technical-zine-theme .tab-btn:hover,
-body.technical-zine-theme .debug-btn:hover,
-body.technical-zine-theme .clear-log:hover {
+body.minimal-theme .btn-secondary:hover,
+body.minimal-theme .icon-button:hover,
+body.minimal-theme .settings-toggle:hover,
+body.minimal-theme .btn-env:hover,
+body.minimal-theme .tab-btn:hover,
+body.minimal-theme .debug-btn:hover,
+body.minimal-theme .clear-log:hover {
     background: var(--technical-ink);
     color: #ffffff;
     box-shadow: 4px 4px 0 rgba(48, 79, 254, 0.35);
 }
 
-body.technical-zine-theme .btn-secondary:active,
-body.technical-zine-theme .icon-button:active,
-body.technical-zine-theme .settings-toggle:active,
-body.technical-zine-theme .btn-env:active,
-body.technical-zine-theme .tab-btn:active,
-body.technical-zine-theme .debug-btn:active,
-body.technical-zine-theme .clear-log:active {
+body.minimal-theme .btn-secondary:active,
+body.minimal-theme .icon-button:active,
+body.minimal-theme .settings-toggle:active,
+body.minimal-theme .btn-env:active,
+body.minimal-theme .tab-btn:active,
+body.minimal-theme .debug-btn:active,
+body.minimal-theme .clear-log:active {
     transform: translateY(2px);
     box-shadow: none;
 }
 
-body.technical-zine-theme .settings-divider {
+body.minimal-theme .settings-divider {
     border-top: 1px dotted var(--technical-ink-soft);
     margin: 34px 0;
     position: relative;
 }
 
-body.technical-zine-theme .settings-divider::after {
+body.minimal-theme .settings-divider::after {
     content: '+';
     position: absolute;
     top: -11px;
@@ -1635,39 +1636,39 @@ body.technical-zine-theme .settings-divider::after {
     padding: 0 6px;
 }
 
-body.technical-zine-theme .banner-height-controls {
+body.minimal-theme .banner-height-controls {
     border-top: 1px dotted var(--technical-ink-soft);
 }
 
-body.technical-zine-theme .status-chip {
+body.minimal-theme .status-chip {
     border-radius: 0;
     border: 1px solid var(--technical-ink);
     background: transparent;
     color: var(--technical-ink);
 }
 
-body.technical-zine-theme .status-chip.success {
+body.minimal-theme .status-chip.success {
     background: rgba(48, 79, 254, 0.12);
 }
 
-body.technical-zine-theme .content-card-item {
+body.minimal-theme .content-card-item {
     border: 1px solid var(--technical-ink-soft);
     background: rgba(48, 79, 254, 0.04);
 }
 
-body.technical-zine-theme .content-card-item.unread {
+body.minimal-theme .content-card-item.unread {
     box-shadow: 6px 6px 0 rgba(48, 79, 254, 0.28);
 }
 
-body.technical-zine-theme code,
-body.technical-zine-theme pre {
+body.minimal-theme code,
+body.minimal-theme pre {
     font-family: 'Space Mono', monospace;
     background: rgba(48, 79, 254, 0.08);
     border: 1px solid var(--technical-ink-soft);
     border-radius: 0;
 }
 
-body.technical-zine-theme .settings-panel {
+body.minimal-theme .settings-panel {
     max-width: 540px;
 }
 
@@ -1675,6 +1676,12 @@ body.technical-zine-theme .settings-panel {
 @media (max-width: 1200px) {
     .content-wrapper {
         flex-direction: column;
+    }
+    
+    body.minimal-theme .container {
+        max-width: 100%;
+        padding: 50px 32px 90px;
+        box-shadow: 16px 16px 0 rgba(48, 79, 254, 0.12);
     }
     
     .right-sidebar {
@@ -1688,6 +1695,11 @@ body.technical-zine-theme .settings-panel {
 @media (max-width: 768px) {
     .container {
         padding: 20px 15px;
+    }
+    
+    body.minimal-theme .container {
+        padding: 32px 18px 72px;
+        box-shadow: 10px 10px 0 rgba(48, 79, 254, 0.12);
     }
     
     .inbox-panel {

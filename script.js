@@ -26,7 +26,7 @@ const defaultSettings = {
     disablePushTokenMaintenance: false,
     userDisplayName: '',
     colorTheme: DEFAULT_COLOR_THEME,
-    technicalZineMode: false
+    minimalMode: false
 };
 let contentCardsData = [];
 let contentCardsMap = new Map();
@@ -118,10 +118,11 @@ function applyColorTheme(theme) {
 function applyPersonalizationSettings(settings = defaultSettings) {
     applyUserDisplayName(settings.userDisplayName || '');
     applyColorTheme(settings.colorTheme || DEFAULT_COLOR_THEME);
-    applyTechnicalZineTheme(Boolean(settings.technicalZineMode));
+    applyMinimalTheme(Boolean(settings.minimalMode));
 }
-function applyTechnicalZineTheme(enabled) {
-    document.body.classList.toggle('technical-zine-theme', Boolean(enabled));
+function applyMinimalTheme(enabled) {
+    document.body.classList.remove('technical-zine-theme');
+    document.body.classList.toggle('minimal-theme', Boolean(enabled));
 }
 
 
@@ -899,10 +900,10 @@ function setupStatePersistence() {
         });
     }
 
-    const technicalZineToggle = document.getElementById('technicalZineModeToggle');
-    if (technicalZineToggle) {
-        technicalZineToggle.addEventListener('change', () => {
-            applyTechnicalZineTheme(technicalZineToggle.checked);
+    const minimalModeToggle = document.getElementById('minimalModeToggle');
+    if (minimalModeToggle) {
+        minimalModeToggle.addEventListener('change', () => {
+            applyMinimalTheme(minimalModeToggle.checked);
             saveSettings();
         });
     }
@@ -1668,7 +1669,7 @@ function saveSettings() {
         disablePushTokenMaintenance: document.getElementById('disablePushTokenMaintenance').checked,
         userDisplayName: (document.getElementById('displayNameInput')?.value || '').trim(),
         colorTheme: document.getElementById('colorThemeSelect')?.value || DEFAULT_COLOR_THEME,
-        technicalZineMode: document.getElementById('technicalZineModeToggle')?.checked ?? false
+        minimalMode: document.getElementById('minimalModeToggle')?.checked ?? false
     };
     
     localStorage.setItem('braze-demo-settings', JSON.stringify(settings));
@@ -1686,6 +1687,10 @@ function loadSettings() {
             console.warn('Failed to load saved settings:', error);
         }
     }
+    if (typeof settings.minimalMode === 'undefined' && typeof settings.technicalZineMode !== 'undefined') {
+        settings.minimalMode = Boolean(settings.technicalZineMode);
+    }
+    settings.minimalMode = Boolean(settings.minimalMode);
     
     document.getElementById('enableLogging').checked = settings.enableLogging;
     document.getElementById('sessionTimeout').value = settings.sessionTimeout;
@@ -1702,9 +1707,9 @@ function loadSettings() {
     if (colorThemeSelect) {
         colorThemeSelect.value = VALID_COLOR_THEMES.has(settings.colorTheme) ? settings.colorTheme : DEFAULT_COLOR_THEME;
     }
-    const technicalZineToggle = document.getElementById('technicalZineModeToggle');
-    if (technicalZineToggle) {
-        technicalZineToggle.checked = Boolean(settings.technicalZineMode);
+    const minimalModeToggle = document.getElementById('minimalModeToggle');
+    if (minimalModeToggle) {
+        minimalModeToggle.checked = Boolean(settings.minimalMode);
     }
     applyPersonalizationSettings(settings);
     return settings;
