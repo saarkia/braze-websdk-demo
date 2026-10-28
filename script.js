@@ -33,6 +33,46 @@ let contentCardsMap = new Map();
 let contentCardsSubscriptionId = null;
 let contentCardsObserver = null;
 let contentCardsImpressionsLogged = new Set();
+let inAppMessageSubscriptionId = null;
+let sdkAuthFailureSubscriptionId = null;
+
+const ecommerceSamples = {
+    'ecommerce.product_viewed': {
+        product_id: 'demo-runner-001',
+        product_name: 'Demo Runner',
+        variant_id: 'demo-runner-orange-uk6',
+        price: 85,
+        currency: 'GBP',
+        source: window.location.origin,
+        metadata: { color: 'orange', category: 'footwear' }
+    },
+    'ecommerce.cart_updated': {
+        cart_id: 'demo-cart-001',
+        currency: 'GBP',
+        total_value: 85,
+        products: [{ product_id: 'demo-runner-001', product_name: 'Demo Runner', variant_id: 'demo-runner-orange-uk6', quantity: 1, price: 85 }],
+        source: window.location.origin,
+        metadata: { channel: 'websdk-demo' }
+    },
+    'ecommerce.checkout_started': {
+        checkout_id: 'demo-checkout-001',
+        cart_id: 'demo-cart-001',
+        total_value: 85,
+        currency: 'GBP',
+        products: [{ product_id: 'demo-runner-001', product_name: 'Demo Runner', variant_id: 'demo-runner-orange-uk6', quantity: 1, price: 85 }],
+        source: window.location.origin,
+        metadata: { checkout_url: `${window.location.origin}/checkout/demo-checkout-001` }
+    },
+    'ecommerce.order_placed': {
+        order_id: 'demo-order-001',
+        cart_id: 'demo-cart-001',
+        total_value: 85,
+        currency: 'GBP',
+        products: [{ product_id: 'demo-runner-001', product_name: 'Demo Runner', variant_id: 'demo-runner-orange-uk6', quantity: 1, price: 85 }],
+        source: window.location.origin,
+        metadata: { order_number: 'DEMO-001' }
+    }
+};
 
 applyColorTheme(DEFAULT_COLOR_THEME);
 
@@ -172,7 +212,7 @@ function renderBannerPlacement() {
 
     if (!brazeInstance || typeof brazeInstance.getBanner !== 'function' || typeof brazeInstance.insertBanner !== 'function') {
         updateBannerStatus('Current SDK does not support banner placements.', 'error');
-        placeholder.textContent = 'Upgrade to Braze Web SDK 5.8.1 or later to display banners.';
+        placeholder.textContent = 'Upgrade to Braze Web SDK 6.13.0 or later to display banners.';
         return;
     }
 
@@ -830,8 +870,9 @@ function setupTabSwitching() {
     const tabButtons = document.querySelectorAll('.tab-btn');
     tabButtons.forEach(button => {
         button.addEventListener('click', function() {
-            const tabName = this.textContent.toLowerCase().split(' ')[1] || this.textContent.toLowerCase().split(' ')[0];
-            switchTab(tabName);
+            const handler = this.getAttribute('onclick') || '';
+            const tabName = handler.match(/switchTab\('([^']+)'\)/)?.[1];
+            if (tabName) switchTab(tabName);
         });
     });
 }
@@ -967,7 +1008,8 @@ function checkSDKLoaded() {
     // Check for both new (braze) and legacy (appboy) SDK names
     if (typeof window.braze !== 'undefined' && window.braze) {
         // SDK is loaded (new naming)
-        sdkVersionElement.textContent = '5.8.0 ✅';
+        const sdkVersion = typeof window.braze.getSdkVersion === 'function' ? window.braze.getSdkVersion() : '6.13.0';
+        sdkVersionElement.textContent = `${sdkVersion} ✅`;
         sdkVersionElement.style.color = '#198754';
         logActivity('Success', 'Braze SDK loaded successfully from CDN.', 'success');
         debugLog('SDK-CHECK', '✅ Braze SDK loaded successfully', 'success');
@@ -1022,7 +1064,7 @@ function retrySDKLoad() {
         logActivity('Info', 'Attempting to reload Braze SDK...', 'info');
         
         // First check if CDN is reachable
-        fetch('https://js.appboycdn.com/web-sdk/5.8/braze.min.js', { method: 'HEAD' })
+        fetch('https://js.appboycdn.com/web-sdk/6.13/braze.min.js', { method: 'HEAD' })
             .then(response => {
                 debugLog('SDK-RELOAD', `CDN response status: ${response.status}`, response.ok ? 'success' : 'error');
                 if (response.ok) {
@@ -1041,7 +1083,7 @@ function retrySDKLoad() {
 
 function loadSDKScript() {
     const script = document.createElement('script');
-    script.src = 'https://js.appboycdn.com/web-sdk/5.8/braze.min.js';
+    script.src = 'https://js.appboycdn.com/web-sdk/6.13/braze.min.js';
     script.async = true;
     
     script.onload = function() {
@@ -1177,6 +1219,12 @@ async function initializeBrazeSDK() {
             brazeInstance.automaticallyShowInAppMessages();
             debugLog('INIT', '✅ Automatic in-app messages enabled', 'success');
         }
+
+        subscribeToInAppMessageDiagnostics();
+        subscribeToSdkAuthenticationFailures();
+        refreshSdkIdentity();
+        updatePushStatus();
+        refreshPushDiagnostics();
         
         // Log all available methods for reference
         const allMethods = Object.keys(brazeInstance).filter(key => typeof brazeInstance[key] === 'function');
@@ -1318,6 +1366,145 @@ function logCustomEvent() {
     }
 }
 
+function getCurrentBrazeUser() {
+    if (!isInitialized || !brazeInstance || typeof brazeInstance.getUser !== 'function') {
+        logActivity('Warning', 'Please initialize the SDK first.', 'warning');
+        return null;
+    }
+    return brazeInstance.getUser();
+}
+
+function saveUserProfile() {
+    const user = getCurrentBrazeUser();
+    if (!user) return;
+
+    const fields = [
+        ['profileEmail', 'setEmail', 'email'],
+        ['profileFirstName', 'setFirstName', 'first name'],
+        ['profileLastName', 'setLastName', 'last name'],
+        ['profileLanguage', 'setLanguage', 'language'],
+        ['profileCountry', 'setCountry', 'country'],
+        ['profileCity', 'setHomeCity', 'home city']
+    ];
+    const updatedFields = [];
+
+    try {
+        fields.forEach(([inputId, method, label]) => {
+            const value = document.getElementById(inputId)?.value.trim();
+            if (value && typeof user[method] === 'function') {
+                user[method](value);
+                updatedFields.push(label);
+            }
+        });
+        if (updatedFields.length === 0) {
+            logActivity('Warning', 'Enter at least one standard profile field to save.', 'warning');
+            return;
+        }
+        logActivity('Success', `Updated ${updatedFields.join(', ')}.`, 'success');
+    } catch (error) {
+        logActivity('Error', `Failed to update profile: ${error.message}`, 'error');
+    }
+}
+
+function updateAttributeArray(action) {
+    const user = getCurrentBrazeUser();
+    if (!user) return;
+    const key = document.getElementById('arrayAttributeKey')?.value.trim();
+    const value = document.getElementById('arrayAttributeValue')?.value.trim();
+    if (!key || !value) {
+        logActivity('Warning', 'Both an array attribute name and value are required.', 'warning');
+        return;
+    }
+
+    const method = action === 'remove' ? 'removeFromCustomAttributeArray' : 'addToCustomAttributeArray';
+    try {
+        if (typeof user[method] !== 'function') {
+            throw new Error(`${method} is not available in this SDK build`);
+        }
+        user[method](key, value);
+        logActivity('Success', `${action === 'remove' ? 'Removed' : 'Added'} “${value}” ${action === 'remove' ? 'from' : 'to'} ${key}.`, 'success');
+    } catch (error) {
+        logActivity('Error', `Failed to update attribute array: ${error.message}`, 'error');
+    }
+}
+
+function updateSubscriptionGroup(action) {
+    const user = getCurrentBrazeUser();
+    if (!user) return;
+    const groupId = document.getElementById('subscriptionGroupId')?.value.trim();
+    if (!groupId) {
+        logActivity('Warning', 'A subscription group ID is required.', 'warning');
+        return;
+    }
+
+    const method = action === 'remove' ? 'removeFromSubscriptionGroup' : 'addToSubscriptionGroup';
+    try {
+        if (typeof user[method] !== 'function') {
+            throw new Error(`${method} is not available in this SDK build`);
+        }
+        user[method](groupId);
+        logActivity('Success', `${action === 'remove' ? 'Removed user from' : 'Added user to'} subscription group ${groupId}.`, 'success');
+    } catch (error) {
+        logActivity('Error', `Failed to update subscription group: ${error.message}`, 'error');
+    }
+}
+
+function applySdkAuthenticationSignature() {
+    if (!isInitialized || !brazeInstance) {
+        logActivity('Warning', 'Initialize the SDK before applying an authentication signature.', 'warning');
+        return;
+    }
+    const input = document.getElementById('sdkAuthSignature');
+    const signature = input?.value.trim();
+    if (!signature) {
+        logActivity('Warning', 'Paste a server-generated SDK authentication signature first.', 'warning');
+        return;
+    }
+    try {
+        if (typeof brazeInstance.setSdkAuthenticationSignature !== 'function') {
+            throw new Error('setSdkAuthenticationSignature is not available in this SDK build');
+        }
+        brazeInstance.setSdkAuthenticationSignature(signature);
+        input.value = '';
+        logActivity('Success', 'SDK authentication signature applied for the current session.', 'success');
+    } catch (error) {
+        logActivity('Error', `Failed to apply SDK authentication signature: ${error.message}`, 'error');
+    }
+}
+
+function loadEcommerceSample() {
+    const eventName = document.getElementById('ecommerceEventName')?.value;
+    const properties = ecommerceSamples[eventName];
+    const input = document.getElementById('ecommerceProperties');
+    if (properties && input) {
+        input.value = JSON.stringify(properties, null, 2);
+    }
+}
+
+function logEcommerceEvent() {
+    if (!isInitialized || !brazeInstance) {
+        logActivity('Warning', 'Please initialize the SDK first.', 'warning');
+        return;
+    }
+    const eventName = document.getElementById('ecommerceEventName')?.value;
+    const propertiesText = document.getElementById('ecommerceProperties')?.value.trim();
+    if (!eventName || !propertiesText) {
+        logActivity('Warning', 'Choose a recommended event and provide its properties.', 'warning');
+        return;
+    }
+    try {
+        if (typeof brazeInstance.logEcommerceEvent !== 'function') {
+            throw new Error('logEcommerceEvent requires Braze Web SDK 6.8.0 or later');
+        }
+        const properties = JSON.parse(propertiesText);
+        brazeInstance.logEcommerceEvent({ name: eventName, properties });
+        logActivity('Success', `Logged recommended eCommerce event: ${eventName}.`, 'success');
+    } catch (error) {
+        const detail = error instanceof SyntaxError ? 'Properties must be valid JSON.' : error.message;
+        logActivity('Error', `Failed to log eCommerce event: ${detail}`, 'error');
+    }
+}
+
 // Session Management
 function startSession() {
     if (!isInitialized) {
@@ -1348,30 +1535,26 @@ function endSession() {
 }
 
 // In-App Messages
-function requestInAppMessages() {
-    if (!isInitialized) {
-        logActivity('Warning', 'Please initialize the SDK first.', 'warning');
+function updateInAppMessageStatus(message) {
+    const status = document.getElementById('inAppMessageStatus');
+    if (status) {
+        status.textContent = message;
+    }
+}
+
+function subscribeToInAppMessageDiagnostics() {
+    if (!brazeInstance || typeof brazeInstance.subscribeToInAppMessage !== 'function' || inAppMessageSubscriptionId) {
         return;
     }
-    
-    try {
-        // Try different possible method names for v5
-        if (typeof brazeInstance.requestContentCardsRefresh === 'function') {
-            brazeInstance.requestContentCardsRefresh();
-            logActivity('Success', 'Content cards refresh requested.', 'success');
-        } else if (typeof brazeInstance.requestImmediateDataFlush === 'function') {
-            brazeInstance.requestImmediateDataFlush();
-            logActivity('Success', 'Data flush requested - in-app messages should refresh.', 'success');
-        } else {
-            // Log available methods for debugging
-            const methods = Object.keys(brazeInstance).filter(key => typeof brazeInstance[key] === 'function');
-            debugLog('IAM', `Available methods: ${methods.join(', ')}`, 'info');
-            logActivity('Info', 'Data flushed. Configure in-app messages in your Braze dashboard.', 'info');
-        }
-    } catch (error) {
-        logActivity('Error', `Failed to request in-app messages: ${error.message}`, 'error');
-        debugLog('IAM', `Error: ${error.stack}`, 'error');
-    }
+    inAppMessageSubscriptionId = brazeInstance.subscribeToInAppMessage((message) => {
+        const type = typeof message?.getMessageType === 'function' ? message.getMessageType() : 'message';
+        const triggerId = typeof message?.getTriggerId === 'function' ? message.getTriggerId() : 'not provided';
+        const details = `Received ${type} in-app message (trigger: ${triggerId}). Braze’s built-in renderer remains enabled.`;
+        updateInAppMessageStatus(details);
+        debugLog('IAM', details, 'info');
+        logActivity('Info', details, 'info');
+    });
+    updateInAppMessageStatus('Listening for in-app messages. Braze’s built-in renderer is enabled.');
 }
 
 function flushData() {
@@ -1382,9 +1565,103 @@ function flushData() {
     
     try {
         brazeInstance.requestImmediateDataFlush();
-        logActivity('Success', 'Data flush requested - all pending data sent to Braze.', 'success');
+        logActivity('Success', 'Queued SDK data flush requested. In-app messages remain campaign-triggered.', 'success');
     } catch (error) {
         logActivity('Error', `Failed to flush data: ${error.message}`, 'error');
+    }
+}
+
+function setIdentityField(id, value) {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value || 'Not available';
+}
+
+function refreshSdkIdentity() {
+    if (!isInitialized || !brazeInstance) {
+        setIdentityField('currentUserId', 'Not available');
+        setIdentityField('currentDeviceId', 'Not available');
+        setIdentityField('currentSdkState', 'Not initialized');
+        return;
+    }
+    try {
+        const userId = typeof brazeInstance.getUserId === 'function' ? brazeInstance.getUserId() : null;
+        const deviceId = typeof brazeInstance.getDeviceId === 'function' ? brazeInstance.getDeviceId() : null;
+        const disabled = typeof brazeInstance.isDisabled === 'function' && brazeInstance.isDisabled();
+        setIdentityField('currentUserId', userId || 'Anonymous user');
+        setIdentityField('currentDeviceId', deviceId);
+        setIdentityField('currentSdkState', disabled ? 'Disabled' : 'Enabled');
+    } catch (error) {
+        setIdentityField('currentSdkState', 'Unavailable');
+        debugLog('LIFECYCLE', `Failed to read SDK identity: ${error.message}`, 'error');
+    }
+}
+
+function setSdkEnabled(enabled) {
+    if (!isInitialized || !brazeInstance) {
+        logActivity('Warning', 'Initialize the SDK before changing its enabled state.', 'warning');
+        return;
+    }
+    const method = enabled ? 'enableSDK' : 'disableSDK';
+    try {
+        if (typeof brazeInstance[method] !== 'function') {
+            throw new Error(`${method} is not available in this SDK build`);
+        }
+        brazeInstance[method]();
+        refreshSdkIdentity();
+        updateSDKStatus(enabled ? 'Initialized' : 'Disabled');
+        logActivity('Success', `SDK ${enabled ? 'enabled' : 'disabled'}.`, 'success');
+    } catch (error) {
+        logActivity('Error', `Failed to ${enabled ? 'enable' : 'disable'} SDK: ${error.message}`, 'error');
+    }
+}
+
+function removeBrazeSubscriptions() {
+    if (!brazeInstance || typeof brazeInstance.removeSubscription !== 'function') return;
+    [bannerSubscriptionId, contentCardsSubscriptionId, inAppMessageSubscriptionId, sdkAuthFailureSubscriptionId]
+        .filter(Boolean)
+        .forEach(subscriptionId => brazeInstance.removeSubscription(subscriptionId));
+    bannerSubscriptionId = null;
+    contentCardsSubscriptionId = null;
+    inAppMessageSubscriptionId = null;
+    sdkAuthFailureSubscriptionId = null;
+}
+
+function destroySdk() {
+    if (!brazeInstance || typeof brazeInstance.destroy !== 'function') {
+        logActivity('Warning', 'Destroy is unavailable until the SDK has initialized.', 'warning');
+        return;
+    }
+    try {
+        removeBrazeSubscriptions();
+        brazeInstance.destroy();
+        isInitialized = false;
+        updateSDKStatus('Destroyed');
+        updateInAppMessageStatus('SDK destroyed. Reinitialize to resume in-app message delivery.');
+        refreshSdkIdentity();
+        logActivity('Success', 'SDK destroyed. Local data remains intact.', 'success');
+    } catch (error) {
+        logActivity('Error', `Failed to destroy SDK: ${error.message}`, 'error');
+    }
+}
+
+function wipeSdkData() {
+    if (!brazeInstance || typeof brazeInstance.wipeData !== 'function') {
+        logActivity('Warning', 'Wipe Data is unavailable until the SDK has initialized.', 'warning');
+        return;
+    }
+    if (!window.confirm('Wipe all Braze data stored in this browser? This cannot be undone.')) {
+        return;
+    }
+    try {
+        removeBrazeSubscriptions();
+        brazeInstance.wipeData();
+        isInitialized = false;
+        updateSDKStatus('Data Wiped');
+        updateInAppMessageStatus('Local Braze data was wiped. Reinitialize to start a new SDK session.');
+        refreshSdkIdentity();
+        logActivity('Success', 'Local Braze SDK data wiped from this browser.', 'success');
+    } catch (error) {
+        logActivity('Error', `Failed to wipe local SDK data: ${error.message}`, 'error');
     }
 }
 
@@ -1398,6 +1675,7 @@ async function requestPushPermission() {
     try {
         const permission = await Notification.requestPermission();
         updatePushStatus();
+        refreshPushDiagnostics();
         
         if (permission === 'granted') {
             logActivity('Success', 'Push notification permission granted.', 'success');
@@ -1434,12 +1712,14 @@ async function registerPush() {
                 logActivity('Success', 'Successfully registered for push notifications.', 'success');
                 debugLog('PUSH', '✅ Push permission granted', 'success');
                 updatePushStatus();
+                refreshPushDiagnostics();
             },
             // Error callback
             () => {
                 logActivity('Warning', 'Push notification permission was denied or dismissed.', 'warning');
                 debugLog('PUSH', '⚠️ Push permission denied', 'warning');
                 updatePushStatus();
+                refreshPushDiagnostics();
             }
         );
         
@@ -1469,10 +1749,44 @@ function testPushNotification() {
             requireInteraction: false
         });
         
-        logActivity('Success', 'Test push notification sent successfully.', 'success');
+        logActivity('Success', 'Browser-local notification shown. This does not test Braze campaign delivery.', 'success');
     } catch (error) {
         logActivity('Error', `Failed to send test notification: ${error.message}`, 'error');
     }
+}
+
+async function refreshPushDiagnostics() {
+    const detailsElement = document.getElementById('pushStatusDetails');
+    if (!detailsElement) return;
+    const diagnostics = [];
+    diagnostics.push(`Browser permission: ${'Notification' in window ? Notification.permission : 'unsupported'}.`);
+    diagnostics.push(`Braze support: ${isInitialized && typeof brazeInstance?.isPushSupported === 'function' ? String(brazeInstance.isPushSupported()) : 'SDK not initialized'}.`);
+
+    if ('serviceWorker' in navigator) {
+        try {
+            const registration = await navigator.serviceWorker.getRegistration(getServiceWorkerScope());
+            const subscription = registration ? await registration.pushManager.getSubscription() : null;
+            diagnostics.push(`Service worker: ${registration ? 'registered' : 'not registered'}.`);
+            diagnostics.push(`Push subscription: ${subscription ? 'present' : 'not present'}.`);
+        } catch (error) {
+            diagnostics.push(`Service worker diagnostics unavailable: ${error.message}.`);
+        }
+    } else {
+        diagnostics.push('Service workers are not supported by this browser.');
+    }
+
+    detailsElement.innerHTML = diagnostics.map(item => `<p>${escapeHtml(item)}</p>`).join('');
+}
+
+function subscribeToSdkAuthenticationFailures() {
+    if (!brazeInstance || typeof brazeInstance.subscribeToSdkAuthenticationFailures !== 'function' || sdkAuthFailureSubscriptionId) {
+        return;
+    }
+    sdkAuthFailureSubscriptionId = brazeInstance.subscribeToSdkAuthenticationFailures((error) => {
+        const message = `SDK authentication failed: ${error?.message || 'Braze rejected the signature. Apply a freshly generated signature.'}`;
+        debugLog('SDK-AUTH', message, 'error');
+        logActivity('Error', message, 'error');
+    });
 }
 
 // Service Worker Registration
@@ -1484,6 +1798,7 @@ async function registerServiceWorker() {
         const registration = await navigator.serviceWorker.register(serviceWorkerLocation, { scope: serviceWorkerScope });
         logActivity('Info', 'Service Worker registered successfully.', 'info');
         debugLog('SW', 'Service Worker registration succeeded.', 'success');
+        refreshPushDiagnostics();
         return registration;
     } catch (error) {
         logActivity('Warning', `Service Worker registration failed: ${error.message}`, 'warning');
@@ -1719,6 +2034,9 @@ function loadSettings() {
 document.addEventListener('DOMContentLoaded', function() {
     loadSettings();
     loadEnvironmentList();
+    loadEcommerceSample();
+    refreshSdkIdentity();
+    refreshPushDiagnostics();
     
     const stateApplied = loadAppState();
 
