@@ -19,10 +19,12 @@ A comprehensive, clean, and futuristic web application for demonstrating Braze W
   - Boolean values
   - Date values
 - **Custom Events**: Log events with optional JSON properties
+- **Profile & Identity**: Set standard profile fields, manage custom attribute arrays and subscription groups, and apply a server-generated SDK authentication signature
+- **Recommended eCommerce Events**: Validate and log product views, cart updates, checkout starts, and orders with `logEcommerceEvent()`
 - **Session Management**: Start and end user sessions manually
 
 ### 💬 In-App Messages
-- **Message Triggering**: Request in-app message refresh
+- **Receipt Diagnostics**: Observe in-app messages received by the SDK while keeping Braze's built-in renderer enabled
 - **Data Flushing**: Force immediate data synchronization
 - **Automatic Display**: Messages configured in Braze dashboard will display automatically
 
@@ -40,8 +42,14 @@ A comprehensive, clean, and futuristic web application for demonstrating Braze W
 ### 🔔 Push Notifications
 - **Permission Management**: Request and manage browser push permissions
 - **Registration Flow**: Complete push notification registration process
-- **Test Notifications**: Send test notifications to verify functionality
+- **Browser Notification Test**: Confirm a browser-local notification can be shown; this does not test Braze campaign delivery
+- **Push Diagnostics**: Inspect browser permission, service worker registration, and push subscription status
 - **Service Worker Support**: Full offline and background notification support
+
+### 🔐 SDK Lifecycle & Privacy
+- **Identity Diagnostics**: View the current Braze user ID, device ID, and enabled state
+- **Lifecycle Controls**: Enable, disable, or destroy the SDK for the current page
+- **Local Data Wipe**: Remove Braze data stored in the browser after an explicit confirmation
 
 ### 🎨 User Interface
 - **Responsive Design**: Works on desktop and mobile devices
@@ -105,9 +113,9 @@ npx serve .
 
 ### Testing Push Notifications
 1. Navigate to "Push Notifications"
-2. Click "Request Permission" (browser will prompt)
+2. Click "Request Browser Permission" (browser will prompt)
 3. Click "Register for Push" to complete setup
-4. Click "Test Notification" to send a test message
+4. Click "Test Browser Notification" to confirm the browser can display a local notification. This does not test Braze campaign delivery.
 
 ### Displaying Banner Placements
 1. Enable **Allow User Supplied JavaScript** in Advanced Settings
